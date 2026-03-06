@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import { sortSizes } from '../../utils/sizeHelper';
@@ -65,10 +65,18 @@ export default function ProductDetailPage() {
 
             // Sản phẩm cùng danh mục
             if (p.data.categoryId) {
-                api.get(`/Product?categoryId=${p.data.categoryId}&pageSize=8`)
+                api.get(`/Product/variants-list?categoryId=${p.data.categoryId}`)
                     .then(({ data }) => {
-                        const items = Array.isArray(data) ? data : (data.items || []);
-                        setRelated(items.filter(i => i.id !== p.data.id).slice(0, 6));
+                        const items = Array.isArray(data) ? data : [];
+                        // Lấy 1 màu đại diện cho mỗi sản phẩm, loại trừ sp hiện tại
+                        const seen = new Set();
+                        const unique = items.filter(i => {
+                            if (i.productId === p.data.id) return false;
+                            if (seen.has(i.productId)) return false;
+                            seen.add(i.productId);
+                            return true;
+                        }).slice(0, 6);
+                        setRelated(unique);
                     }).catch(() => { });
             }
         }).catch(() => navigate('/san-pham'))
@@ -303,10 +311,10 @@ export default function ProductDetailPage() {
                             <button onClick={() => { document.getElementById('related-grid').scrollBy({ left: 300, behavior: 'smooth' }) }} style={{ position: 'absolute', right: -20, top: '40%', transform: 'translateY(-50%)', zIndex: 10, background: '#fff', border: '1px solid #ddd', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>{'>'}</button>
                             <div id="related-grid" className="product-grid" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 20, paddingBottom: 20, scrollBehavior: 'smooth', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
                                 {related.map(p => (
-                                    <div key={p.id} className="product-card" style={{ flex: '0 0 auto', width: '250px', scrollSnapAlign: 'start' }} onClick={() => navigate(`/san-pham/${p.slug}`)}>
+                                    <div key={p.productId} className="product-card" style={{ flex: '0 0 auto', width: '250px', scrollSnapAlign: 'start' }} onClick={() => navigate(`/san-pham/${p.slug}`)}>
                                         <div className="product-card-img">
                                             {p.mainImageUrl
-                                                ? <img src={p.mainImageUrl} alt={p.name} loading="lazy" />
+                                                ? <img src={p.mainImageUrl} alt={p.productName} loading="lazy" />
                                                 : <div className="product-card-img-placeholder">🖼️</div>
                                             }
                                             <div className="product-labels">
@@ -315,7 +323,7 @@ export default function ProductDetailPage() {
                                             </div>
                                         </div>
                                         <div className="product-card-body">
-                                            <div className="product-card-name">{p.name}</div>
+                                            <div className="product-card-name">{p.productName}</div>
                                             <div className="product-card-price">
                                                 {p.isOnSale && p.salePrice
                                                     ? <><span className="price-current">{p.salePrice.toLocaleString('vi-VN')}₫</span><span className="price-origin">{p.basePrice.toLocaleString('vi-VN')}₫</span></>
