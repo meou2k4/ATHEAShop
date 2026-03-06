@@ -21,5 +21,13 @@ app.use('/api/Upload', require('./routes/upload.routes'));
 // Health check
 app.get('/', (req, res) => res.json({ message: 'ATHEA FashionShop API is running.' }));
 
+// Xuất app để Vercel dùng làm Serverless Function
+module.exports = app;
+
 const PORT = process.env.PORT || 7299;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        console.log(`➜  Local:   http://localhost:${PORT}/`);
+    });
+}

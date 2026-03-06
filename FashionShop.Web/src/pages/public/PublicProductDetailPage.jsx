@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
+import { sortSizes } from '../../utils/sizeHelper';
 
 export default function ProductDetailPage() {
     const { slug } = useParams();
@@ -111,10 +112,10 @@ export default function ProductDetailPage() {
         return encodeURIComponent(msg);
     };
 
-    const zaloUrl = settings['ZaloUrl']
-        ? `${settings['ZaloUrl']}?text=${buildContactMsg()}`
+    const zaloUrl = settings['Zalo']
+        ? `${settings['Zalo']}?text=${buildContactMsg()}`
         : null;
-    const fbUrl = settings['FacebookUrl'] || null;
+    const fbUrl = settings['Facebook'] || null;
 
     return (
         <>
@@ -224,7 +225,7 @@ export default function ProductDetailPage() {
                                 <div>
                                     <div className="selector-label">SIZE :</div>
                                     <div className="size-options-box">
-                                        {sizesForColor.map(s => (
+                                        {sortSizes(sizesForColor).map(s => (
                                             <div
                                                 key={s.id}
                                                 className={`size-box ${selectedSize === s.id ? 'active' : ''}`}

@@ -10,7 +10,7 @@ function VariantCard({ item }) {
         const discountPercent = hasDiscount ? Math.round(((item.basePrice - item.salePrice) / item.basePrice) * 100) : 0;
 
         return (
-                <div className="vcard" onClick={() => navigate(`/san-pham/${item.productSlug}`)}>
+                <div className="vcard" onClick={() => navigate(`/san-pham/${item.slug}`)}>
                         <div className="vcard-img">
                                 {item.mainImageUrl
                                         ? <img src={item.mainImageUrl} alt={item.productName} loading="lazy" />
@@ -107,7 +107,7 @@ export default function HomePage() {
                                                 </div>
                                                 <div className="category-scroll-container">
                                                         {categories.map(c => (
-                                                                <Link key={c.id} to={`/san-pham?categoryId=${c.id}`} className="category-pill">
+                                                                <Link key={c.id} to={`/ san - pham ? categoryId = ${c.id}`} className="category-pill">
                                                                         <span className="category-pill-name">{c.name}</span>
                                                                 </Link>
                                                         ))}
@@ -126,7 +126,7 @@ export default function HomePage() {
                                                         </div>
                                                 </div>
                                                 <div className="vcard-grid-home">
-                                                        {newProducts.map((p, i) => <VariantCard key={`${p.productId}-${p.colorId ?? i}`} item={p} />)}
+                                                        {newProducts.map((p, i) => <VariantCard key={`${p.productId} - ${p.colorId ?? i}`} item={p} />)}
                                                 </div>
                                                 <div style={{ textAlign: 'center', marginTop: 32 }}>
                                                         <Link to="/san-pham?filter=new" className="btn-athea-outline">Xem thêm</Link>
@@ -145,7 +145,7 @@ export default function HomePage() {
                                                         </div>
                                                 </div>
                                                 <div className="vcard-grid-home">
-                                                        {saleProducts.map((p, i) => <VariantCard key={`${p.productId}-${p.colorId ?? i}`} item={p} />)}
+                                                        {saleProducts.map((p, i) => <VariantCard key={`${p.productId} - ${p.colorId ?? i}`} item={p} />)}
                                                 </div>
                                                 <div style={{ textAlign: 'center', marginTop: 32 }}>
                                                         <Link to="/san-pham?filter=sale" className="btn-athea-outline">Xem thêm</Link>

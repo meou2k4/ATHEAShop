@@ -10,7 +10,7 @@ function VariantCard({ item }) {
     const discountPercent = hasDiscount ? Math.round(((item.basePrice - item.salePrice) / item.basePrice) * 100) : 0;
 
     return (
-        <div className="vcard" onClick={() => navigate(`/san-pham/${item.productSlug}${item.colorId ? `?color=${item.colorId}` : ''}`)}>
+        <div className="vcard" onClick={() => navigate(`/san-pham/${item.slug}${item.colorId ? `?color=${item.colorId}` : ''}`)}>
             <div className="vcard-img">
                 {item.mainImageUrl
                     ? <img src={item.mainImageUrl} alt={item.productName} loading="lazy" />

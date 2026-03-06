@@ -1,8 +1,9 @@
 ﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
+import { sortSizes } from '../../utils/sizeHelper';
 
-const API_BASE = 'https://localhost:7299';
+const API_BASE = 'http://localhost:7299';
 
 function DetailModal({ productId, colors, sizes, editColor, editImages, editVariants, onClose, onSaved }) {
     const isEdit = !!editColor;
@@ -75,13 +76,29 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
         setImgItems(prev => prev.filter(i => i.id !== item.id));
     };
 
-    const uploadFileToServer = async (file) => {
+    const processImageOnServer = async (item) => {
         const token = localStorage.getItem('token');
-        const fd = new FormData(); fd.append('file', file);
-        const res = await fetch(`${API_BASE}/api/Upload/image`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
-        const data = await res.json();
-        if (!data.url) throw new Error('Upload thất bại');
-        return `${API_BASE}${data.url}`;
+        if (item.type === 'file') {
+            const fd = new FormData(); fd.append('file', item.file);
+            const res = await fetch(`${API_BASE}/api/Upload/image`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: fd
+            });
+            const data = await res.json();
+            if (!data.url) throw new Error(data.message || 'Upload file thất bại');
+            return data;
+        } else {
+            // item.type === 'url'
+            const res = await fetch(`${API_BASE}/api/Upload/image`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ imageUrl: item.url })
+            });
+            const data = await res.json();
+            if (!data.url) throw new Error(data.message || 'Xử lý URL ảnh thất bại');
+            return data;
+        }
     };
 
     const handleSave = async () => {
@@ -97,12 +114,15 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
             for (let i = 0; i < uploadedItems.length; i++) {
                 const item = uploadedItems[i];
                 if (item.status !== 'pending') continue;
-                if (item.type === 'file') {
-                    const url = await uploadFileToServer(item.file);
-                    uploadedItems[i] = { ...item, url, status: 'uploaded' };
-                } else {
-                    uploadedItems[i] = { ...item, status: 'uploaded' };
-                }
+
+                const uploadRes = await processImageOnServer(item);
+                uploadedItems[i] = {
+                    ...item,
+                    url: uploadRes.url,
+                    previewUrl: uploadRes.url, // Cập nhật preview bằng link Cloudinary để kiểm tra chất lượng
+                    publicId: uploadRes.publicId,
+                    status: 'uploaded'
+                };
             }
             setImgItems(uploadedItems);
 
@@ -110,6 +130,7 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
                 if (item.status === 'saved') continue;
                 await api.post(`/Product/${productId}/images`, {
                     imageUrl: item.url,
+                    publicId: item.publicId,
                     colorId,
                     isMain: item.isMain,
                 });
@@ -180,7 +201,7 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
                                         : <select className="form-control" value={row.sizeId}
                                             onChange={e => setSizeRows(rows => rows.map((r, i) => i === idx ? { ...r, sizeId: e.target.value } : r))}>
                                             <option value="">Chọn size</option>
-                                            {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            {sortSizes(sizes).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                     }
                                 </div>
@@ -370,7 +391,7 @@ export default function ProductDetailPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {detail.variants.map(v => (
+                                                    {sortSizes(detail.variants, 'sizeName').map(v => (
                                                         <tr key={v.id}>
                                                             <td style={{ textAlign: 'left' }}><span className="badge badge-primary">{v.sizeName}</span></td>
                                                             <td style={{ textAlign: 'left' }}>
