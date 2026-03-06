@@ -2,11 +2,13 @@ const prisma = require('../config/db');
 const slugify = require('../utils/slugify');
 
 const getAll = async (req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     const categories = await prisma.category.findMany({ orderBy: { id: 'asc' } });
     res.json(categories);
 };
 
 const getById = async (req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     const cat = await prisma.category.findUnique({ where: { id: +req.params.id } });
     if (!cat) return res.status(404).json({ message: 'Không tìm thấy danh mục.' });
     res.json(cat);

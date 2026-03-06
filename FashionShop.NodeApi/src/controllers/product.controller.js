@@ -45,6 +45,7 @@ const mapProduct = (p) => ({
 
 // GET /api/Product
 const getAll = async (req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
     const products = await prisma.product.findMany({
         include: productInclude,
         orderBy: { createdAt: 'desc' },
@@ -54,6 +55,7 @@ const getAll = async (req, res) => {
 
 // GET /api/Product/variants-list?categoryId=&isNew=&isOnSale=
 const getVariantList = async (req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
     const { categoryId, isNew, isOnSale } = req.query;
 
     const where = { isActive: true };
@@ -100,6 +102,7 @@ const getVariantList = async (req, res) => {
 
 // GET /api/Product/:id
 const getById = async (req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
     const product = await prisma.product.findUnique({
         where: { id: +req.params.id },
         include: productInclude,
@@ -110,6 +113,7 @@ const getById = async (req, res) => {
 
 // GET /api/Product/by-slug/:slug
 const getBySlug = async (req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
     const product = await prisma.product.findUnique({
         where: { slug: req.params.slug },
         include: productInclude,
