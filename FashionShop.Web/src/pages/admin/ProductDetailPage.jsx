@@ -1,9 +1,13 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import { sortSizes } from '../../utils/sizeHelper';
 
-const API_BASE = 'http://localhost:7299';
+// VITE_API_URL should be configured in Vercel Environment Variables
+// Example: https://www.athea.cloud/api
+// Tách lấy domain chính để upload ảnh
+const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:7299';
+const API_BASE = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
 function DetailModal({ productId, colors, sizes, editColor, editImages, editVariants, onClose, onSaved }) {
     const isEdit = !!editColor;
