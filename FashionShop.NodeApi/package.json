@@ -1,0 +1,22 @@
+{
+  "name": "fashionshop-node-api",
+  "version": "1.0.0",
+  "description": "ATHEA FashionShop Backend API - Node.js + Express + Prisma",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js",
+    "db:migrate": "prisma migrate dev --name init",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate"
+  },
+  "keywords": [
+    "fashionshop",
+    "api",
+    "express",
+    "prisma"
+  ],
+  "author": "ATHEA",
+  "license": "ISC"
+}
