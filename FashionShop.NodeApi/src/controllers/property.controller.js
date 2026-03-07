@@ -57,4 +57,32 @@ const createSize = async (req, res) => {
     }
 };
 
-module.exports = { getColors, createColor, getSizes, createSize };
+const deleteSize = async (req, res) => {
+    try {
+        const id = +req.params.id;
+        const used = await prisma.productVariant.findFirst({ where: { sizeId: id } });
+        if (used) return res.status(400).json({ message: 'Không thể xoá vì kích thước này đang được sử dụng.' });
+        
+        await prisma.size.delete({ where: { id } });
+        res.status(204).send();
+    } catch (error) {
+        console.error('Delete Size Error:', error);
+        res.status(500).json({ message: 'Lỗi hệ thống khi xoá kích thước.' });
+    }
+};
+
+const deleteColor = async (req, res) => {
+    try {
+        const id = +req.params.id;
+        const used = await prisma.productVariant.findFirst({ where: { colorId: id } });
+        if (used) return res.status(400).json({ message: 'Không thể xoá vì màu này đang được sử dụng.' });
+        
+        await prisma.color.delete({ where: { id } });
+        res.status(204).send();
+    } catch (error) {
+        console.error('Delete Color Error:', error);
+        res.status(500).json({ message: 'Lỗi hệ thống khi xoá màu.' });
+    }
+};
+
+module.exports = { getColors, createColor, deleteColor, getSizes, createSize, deleteSize };
