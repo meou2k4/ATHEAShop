@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 
@@ -107,7 +107,7 @@ export default function HomePage() {
                                                 </div>
                                                 <div className="category-scroll-container">
                                                         {categories.map(c => (
-                                                                <Link key={c.id} to={`/ san - pham ? categoryId = ${c.id}`} className="category-pill">
+                                                                <Link key={c.id} to={`/san-pham?categoryId=${c.id}`} className="category-pill">
                                                                         <span className="category-pill-name">{c.name}</span>
                                                                 </Link>
                                                         ))}
@@ -157,7 +157,7 @@ export default function HomePage() {
                         {/* POLICY BANNER (Dark Theme) */}
                         <section style={{ background: '#1c1c1c', color: 'white', padding: '40px 0' }}>
                                 <div className="container">
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, textAlign: 'center' }}>
+                                        <div className="policy-grid">
                                                 <div>
                                                         <div style={{ fontSize: 24, marginBottom: 8 }}>🔄</div>
                                                         <h4 style={{ fontSize: 13, fontWeight: 700, margin: '0 0 4px', textTransform: 'uppercase' }}>6 NGÀY ĐỔI SẢN PHẨM</h4>

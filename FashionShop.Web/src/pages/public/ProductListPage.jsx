@@ -137,13 +137,15 @@ export default function ProductListPage() {
                         </button>
                         {expanded[f.id] && (
                             <ul className="plp-sidebar-list">
-                                {f.id === 'all' && (
-                                    <li>
-                                        <Link to="/san-pham" className={`plp-sidebar-link ${!categoryId && !filter ? 'active' : ''}`}>
-                                            Tất cả
-                                        </Link>
-                                    </li>
-                                )}
+                                {/* "Tất cả" link luôn hiển thị cho mọi section */}
+                                <li>
+                                    <Link
+                                        to={f.id === 'all' ? '/san-pham' : `/san-pham?filter=${f.id}`}
+                                        className={`plp-sidebar-link ${!categoryId && filter === (f.id === 'all' ? null : f.id) && (f.id === 'all' ? !filter : true) ? 'active' : ''}`}
+                                    >
+                                        Tất cả
+                                    </Link>
+                                </li>
                                 {categories.map(c => (
                                     <li key={c.id}>
                                         <Link

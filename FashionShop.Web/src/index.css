@@ -1,4 +1,4 @@
-﻿/* ============================================
+/* ============================================
    FASHIONSHOP ADMIN — DESIGN SYSTEM
    ============================================ */
 
@@ -790,6 +790,24 @@ tr:hover td {
 .footer-athea-col {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+}
+
+.footer-athea-col-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.footer-athea-col.center-col {
+  align-items: center;
+}
+
+.footer-athea-col.right-col {
+  align-items: flex-end;
 }
 
 .footer-logo {
@@ -823,13 +841,6 @@ tr:hover td {
   justify-content: flex-start;
 }
 
-/* Fallback flex wrap cho màn di động */
-@media (max-width: 899px) {
-  .footer-athea-social {
-    justify-content: center;
-  }
-}
-
 .social-icon {
   width: 28px;
   height: 28px;
@@ -849,28 +860,22 @@ tr:hover td {
   color: #fff;
 }
 
+/* Footer mobile: tất cả cột căn giữa */
 @media (max-width: 900px) {
+  .footer-athea {
+    padding: 36px 0 28px;
+  }
+
   .footer-athea-grid {
     grid-template-columns: 1fr;
     text-align: center;
-    gap: 40px;
+    gap: 28px;
   }
 
+  .footer-athea-col,
+  .footer-athea-col.center-col,
   .footer-athea-col.right-col {
-    align-items: center !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .footer-athea-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    text-align: center;
-  }
-
-  .footer-athea-col.right-col,
-  .footer-athea-col.left-col {
-    text-align: center;
+    align-items: center;
   }
 
   .footer-athea-social {
@@ -2403,4 +2408,247 @@ tr:hover td {
   right: 30px;
   background: rgba(255, 255, 255, 0.1);
   z-index: 10000;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN (MOBILE & TABLET)
+   ============================================ */
+
+/* Base container for policy grid */
+.policy-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  text-align: center;
+}
+
+/* Mobile Menu Button */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--pub-text);
+  padding: 8px;
+}
+.admin-mobile-header .mobile-menu-btn {
+  color: var(--text);
+}
+
+.admin-mobile-header {
+  display: none;
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+}
+.admin-mobile-logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-left: 10px;
+}
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 95;
+}
+.sidebar-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: auto;
+  padding: 8px;
+}
+
+/* Tablet (Max 1024px) */
+@media (max-width: 1024px) {
+  .pub-header .container {
+    grid-template-columns: 1fr auto;
+  }
+  .pub-nav {
+    display: none;
+    position: absolute;
+    top: var(--pub-header-h);
+    left: 0;
+    width: 100%;
+    background: var(--pub-surface);
+    flex-direction: column;
+    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    border-top: 1px solid var(--pub-border);
+  }
+  .pub-nav.open {
+    display: flex;
+  }
+  .pub-nav a {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+  .mobile-menu-btn {
+    display: block;
+    justify-self: end;
+  }
+
+  /* Admin Sidebar */
+  .admin-layout {
+    flex-direction: column;
+  }
+  .admin-mobile-header {
+    display: flex;
+  }
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-overlay {
+    display: block;
+  }
+  .sidebar-close-btn {
+    display: block;
+  }
+  .main-content {
+    margin-left: 0;
+  }
+
+  /* Grids */
+  .vcard-grid-home, .vcard-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .footer-athea-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .product-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .plp-wrapper {
+    grid-template-columns: 1fr;
+    padding: 24px 16px;
+  }
+  .plp-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--pub-border);
+    padding-right: 0;
+    padding-bottom: 20px;
+    margin-bottom: 4px;
+  }
+  .plp-main {
+    padding-left: 0;
+  }
+  .policy-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Mobile (Max 768px) */
+@media (max-width: 768px) {
+  /* Forms */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Grids */
+  .vcard-grid-home, .vcard-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px;
+  }
+  .footer-athea-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .footer-athea-grid .footer-athea-col {
+    align-items: center;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Hero */
+  .hero-athea-content {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+  }
+  .hero-athea-actions {
+    justify-content: center;
+  }
+  .hero-athea-text h1 {
+    font-size: 32px !important;
+  }
+  
+  /* Detail Page */
+  .gallery-athea {
+    flex-direction: column-reverse;
+  }
+  .gallery-thumbs-vert {
+    flex-direction: row;
+    width: 100%;
+    overflow-x: auto;
+  }
+  .gallery-thumb-vert {
+    width: 60px;
+    height: 80px;
+    flex-shrink: 0;
+  }
+  
+  /* Fix Mobile Image Gap */
+  .gallery-main-athea {
+    aspect-ratio: auto;
+    width: auto;
+    max-width: 100%;
+    align-self: center;
+    background: transparent;
+  }
+  .gallery-main-athea img {
+    height: auto;
+    width: auto;
+    max-width: 100%;
+    max-height: 70vh; /* Prevent it from being taller than screen */
+    object-fit: contain;
+    display: block;
+  }
+
+  .product-info h1 {
+    font-size: 24px !important;
+  }
+  
+  /* Login */
+  .login-card {
+    width: 90% !important;
+    padding: 30px 20px !important;
+  }
+
+  /* Table */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  table th, table td {
+    white-space: nowrap;
+  }
+}
+
+/* Small Mobile (Max 480px) */
+@media (max-width: 480px) {
+  .vcard-grid-home, .vcard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .policy-grid {
+    grid-template-columns: 1fr !important;
+  }
 }

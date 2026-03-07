@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axiosConfig';
 
@@ -18,24 +18,26 @@ export default function PublicFooter() {
             <div className="container">
                 <div className="footer-athea-grid">
                     {/* Cột 1: SẢN PHẨM */}
-                    <div className="footer-athea-col" style={{ alignItems: 'flex-start' }}>
-                        <ul className="footer-athea-links" style={{ textAlign: 'center' }}>
-                            <li style={{ fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 6 }}>SẢN PHẨM</li>
+                    <div className="footer-athea-col">
+                        <ul className="footer-athea-links">
+                            <li className="footer-athea-col-title">SẢN PHẨM</li>
                             <li><Link to="/san-pham?filter=new">SẢN PHẨM MỚI</Link></li>
                             <li><Link to="/san-pham?filter=sale">SẢN PHẨM GIẢM GIÁ</Link></li>
                             <li><Link to="/san-pham">TẤT CẢ SẢN PHẨM</Link></li>
                         </ul>
                     </div>
 
-                    <div className="footer-athea-col center-col" style={{ alignItems: 'center' }}>
-                        <ul className="footer-athea-links" style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', gap: 8 }}>
+                    {/* Cột 2: Chính sách + Liên hệ */}
+                    <div className="footer-athea-col center-col">
+                        <ul className="footer-athea-links">
                             <li><Link to="/chinh-sach">CHÍNH SÁCH MUA SẮM</Link></li>
                             <li><Link to="/lien-he">LIÊN HỆ</Link></li>
                         </ul>
                     </div>
 
-                    <div className="footer-athea-col right-col" style={{ alignItems: 'flex-end' }}>
-                        <div className="footer-athea-social" style={{ marginBottom: 16 }}>
+                    {/* Cột 3: Mạng xã hội */}
+                    <div className="footer-athea-col right-col">
+                        <div className="footer-athea-social">
                             <a href={settings['Facebook'] || '#'} target="_blank" rel="noreferrer" title="Facebook" className="social-icon">f</a>
                             <a href={settings['Zalo'] || '#'} target="_blank" rel="noreferrer" title="Zalo" className="social-icon">Z</a>
                             <a href={settings['Hotline'] ? `tel:${settings['Hotline']}` : 'tel:19006650'} title="Gọi Điện" className="social-icon">📞</a>
@@ -46,4 +48,3 @@ export default function PublicFooter() {
         </footer>
     );
 }
-
