@@ -9,6 +9,7 @@ export default function CategoriesPage() {
     const [form, setForm] = useState({ name: '', slug: '', displayOrder: 1 });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fetchCategories = async () => {
         try {
@@ -44,6 +45,7 @@ export default function CategoriesPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setIsSubmitting(true);
         try {
             if (editing) {
                 await api.put(`/Category/${editing.id}`, form);
@@ -56,56 +58,82 @@ export default function CategoriesPage() {
             setTimeout(() => { setShowModal(false); setSuccess(''); }, 1000);
         } catch (err) {
             setError(err.response?.data?.message || 'Có lỗi xảy ra.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleDelete = async (id, name) => {
         if (!window.confirm(`Xóa danh mục "${name}"?`)) return;
+        setIsSubmitting(true);
         try {
             await api.delete(`/Category/${id}`);
             fetchCategories();
         } catch { alert('Không thể xóa danh mục này.'); }
+        finally { setIsSubmitting(false); }
     };
 
     return (
         <div>
             <div className="card-header">
                 <h2 className="page-title" style={{ margin: 0 }}>📁 Quản lý Danh mục</h2>
-                <button className="btn btn-primary" onClick={openCreate}>+ Thêm danh mục</button>
+                <button className="btn btn-primary" onClick={openCreate} disabled={isSubmitting}>+ Thêm danh mục</button>
             </div>
 
             <div className="card">
                 {loading ? <div className="loading">Đang tải...</div> : (
-                    <div className="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>STT</th>
-                                    <th>Tên danh mục</th>
-                                    <th>Slug</th>
-                                    <th>Thứ tự</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {categories.length === 0 ? (
-                                    <tr><td colSpan={5} className="text-center" style={{ padding: 40, color: 'var(--text-muted)' }}>Chưa có danh mục nào</td></tr>
-                                ) : categories.map((cat, i) => (
-                                    <tr key={cat.id}>
-                                        <td>{i + 1}</td>
-                                        <td><strong>{cat.name}</strong></td>
-                                        <td><code style={{ fontSize: 12, background: 'var(--bg)', padding: '2px 6px', borderRadius: 4 }}>{cat.slug}</code></td>
-                                        <td><span className="badge badge-primary">{cat.displayOrder}</span></td>
-                                        <td>
-                                            <div className="td-actions">
-                                                <button className="btn btn-outline btn-sm" onClick={() => openEdit(cat)}>✏️ Sửa</button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(cat.id, cat.name)}>🗑️ Xóa</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="data-list-container">
+                        <div className="data-list-header grid-categories">
+                            <div className="data-list-cell text-center">STT</div>
+                            <div className="data-list-cell">TÊN DANH MỤC</div>
+                            <div className="data-list-cell">SLUG</div>
+                            <div className="data-list-cell text-center">THỨ TỰ</div>
+                            <div className="data-list-cell text-center">THAO TÁC</div>
+                        </div>
+                        {categories.length === 0 ? (
+                            <div className="text-center" style={{ padding: 40, color: 'var(--text-muted)' }}>Chưa có danh mục nào</div>
+                        ) : categories.map((cat, i) => (
+                            <div key={cat.id} className="data-list-row grid-categories">
+                                {/* Mobile Header - Premium Hero */}
+                                <div className="data-list-card-main">
+                                    <div className="data-list-card-info">
+                                        <div className="name">{cat.name}</div>
+                                        <div className="sub">{cat.slug}</div>
+                                    </div>
+                                </div>
+
+                                {/* Desktop-only columns */}
+                                <div className="data-list-cell desktop-only text-center" data-label="STT">{i + 1}</div>
+                                <div className="data-list-cell desktop-only" data-label="Tên"><strong>{cat.name}</strong></div>
+                                
+                                {/* Desktop SLUG */}
+                                <div className="data-list-cell desktop-only" data-label="Slug">
+                                    <code style={{ fontSize: 11, background: 'var(--bg)', padding: '2px 6px', borderRadius: 4 }}>/{cat.slug}</code>
+                                </div>
+
+                                {/* Desktop ORDER */}
+                                <div className="data-list-cell desktop-only text-center" data-label="Thứ tự">
+                                    <span className="badge badge-primary">{cat.displayOrder}</span>
+                                </div>
+
+                                {/* Mobile-only combined cell */}
+                                <div className="data-list-cell mobile-only" style={{ justifyContent: 'flex-start', borderBottom: 'none', paddingBottom: 0, display: 'flex' }}>
+                                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                        <span className="badge badge-primary" style={{ display: 'inline-flex', padding: '6px 12px', fontSize: 13, background: 'var(--admin-primary-light)', color: 'var(--admin-primary)' }}>Thứ tự: {cat.displayOrder}</span>
+                                        <code style={{ fontSize: 13, background: 'var(--bg)', padding: '6px 12px', borderRadius: 6, color: 'var(--admin-text)' }}>/{cat.slug}</code>
+                                    </div>
+                                </div>
+
+                                <div className="data-list-cell text-center" data-label="Thao tác" style={{ paddingTop: 16 }}>
+                                    <div className="td-actions">
+                                        <button className="btn btn-info btn-sm" onClick={() => openEdit(cat)} disabled={isSubmitting}>✏️ Sửa</button>
+                                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(cat.id, cat.name)} disabled={isSubmitting}>
+                                            {isSubmitting ? '...' : '🗑️ Xóa'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
@@ -134,8 +162,10 @@ export default function CategoriesPage() {
                                 <input className="form-control" type="number" min={1} value={form.displayOrder} onChange={e => setForm(f => ({ ...f, displayOrder: +e.target.value }))} required />
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Hủy</button>
-                                <button type="submit" className="btn btn-primary">{editing ? 'Cập nhật' : 'Thêm mới'}</button>
+                                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)} disabled={isSubmitting}>Hủy</button>
+                                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                                    {isSubmitting ? 'Đang xử lý...' : (editing ? 'Cập nhật' : 'Thêm mới')}
+                                </button>
                             </div>
                         </form>
                     </div>

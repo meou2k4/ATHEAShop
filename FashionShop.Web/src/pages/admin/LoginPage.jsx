@@ -29,7 +29,7 @@ export default function LoginPage() {
     return (
         <div className="login-page">
             <div className="login-card">
-                <div className="login-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '140px', overflow: 'hidden', justifyContent: 'center', marginBottom: '12px' }}>
+                <div className="login-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '122px', overflow: 'hidden', justifyContent: 'center', marginBottom: '12px' }}>
                     <img src="/logo.png" alt="ATHEA" style={{ height: '200px', filter: 'brightness(0)' }} />
                 </div>
                 <div style={{ textAlign: 'center' }}>

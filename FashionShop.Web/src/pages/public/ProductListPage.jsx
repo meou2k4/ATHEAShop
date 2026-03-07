@@ -126,9 +126,22 @@ export default function ProductListPage() {
         }
     };
 
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+    // Close on location change
+    useEffect(() => { setIsFilterOpen(false); }, [filter, categoryId]);
+
     return (
         <div className="plp-wrapper">
-            <aside className="plp-sidebar">
+            {/* Mobile Filter Backdrop */}
+            {isFilterOpen && <div className="plp-filter-backdrop" onClick={() => setIsFilterOpen(false)} />}
+            
+            <aside className={`plp-sidebar ${isFilterOpen ? 'open' : ''}`}>
+                <div className="plp-sidebar-mobile-header">
+                    <h3>BỘ LỌC</h3>
+                    <button onClick={() => setIsFilterOpen(false)}>✕</button>
+                </div>
+                
                 {FILTERS.map(f => (
                     <div key={f.id} className="plp-sidebar-section">
                         <button className="plp-sidebar-header" onClick={() => handleHeaderClick(f.id)}>
@@ -137,7 +150,6 @@ export default function ProductListPage() {
                         </button>
                         {expanded[f.id] && (
                             <ul className="plp-sidebar-list">
-                                {/* "Tất cả" link luôn hiển thị cho mọi section */}
                                 <li>
                                     <Link
                                         to={f.id === 'all' ? '/san-pham' : `/san-pham?filter=${f.id}`}
@@ -163,34 +175,34 @@ export default function ProductListPage() {
             </aside>
 
             <main className="plp-main">
-                <header className="plp-header" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    borderBottom: '1px solid var(--pub-border)',
-                    paddingBottom: 15,
-                    marginBottom: 30
-                }}>
-                    <h1 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
-                        {pageTitle} <span style={{ fontWeight: 400, color: 'var(--pub-muted)', marginLeft: 8, textTransform: 'none' }}>({items.length} sản phẩm)</span>
-                    </h1>
+                <header className="plp-toolbar">
+                    <div className="plp-toolbar-left">
+                        <h1 className="plp-toolbar-name">
+                            {pageTitle} <span className="plp-toolbar-count">({items.length} sản phẩm)</span>
+                        </h1>
+                    </div>
 
-                    <div className="plp-sort" ref={sortRef} style={{ marginBottom: 0 }}>
-                        <button className="plp-sort-btn" onClick={() => setShowSort(s => !s)}>
-                            = {sortLabel}
+                    <div className="plp-toolbar-right">
+                        <button className="plp-filter-btn" onClick={() => setIsFilterOpen(true)}>
+                            Bộ lọc
                         </button>
-                        {showSort && (
-                            <div className="plp-sort-menu">
-                                {SORT_OPTIONS.map(o => (
-                                    <button
-                                        key={o.value}
-                                        className={`plp-sort-option ${sort === o.value ? 'active' : ''}`}
-                                        onClick={() => { setParam('sort', o.value === 'default' ? null : o.value); setShowSort(false); }}>
-                                        {o.label}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        <div className="plp-sort" ref={sortRef}>
+                            <button className="plp-sort-btn" onClick={() => setShowSort(s => !s)}>
+                                {sortLabel} ▾
+                            </button>
+                            {showSort && (
+                                <div className="plp-sort-menu">
+                                    {SORT_OPTIONS.map(o => (
+                                        <button
+                                            key={o.value}
+                                            className={`plp-sort-option ${sort === o.value ? 'active' : ''}`}
+                                            onClick={() => { setParam('sort', o.value === 'default' ? null : o.value); setShowSort(false); }}>
+                                            {o.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </header>
 

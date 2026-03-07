@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../../api/axiosConfig';
 
 export default function PropertiesPage() {
@@ -10,6 +10,7 @@ export default function PropertiesPage() {
     const [colorSuccess, setColorSuccess] = useState('');
     const [sizeError, setSizeError] = useState('');
     const [sizeSuccess, setSizeSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fetchAll = async () => {
         try {
@@ -29,6 +30,7 @@ export default function PropertiesPage() {
         e.preventDefault();
         setColorError('');
         setColorSuccess('');
+        setIsSubmitting(true);
         try {
             await api.post('/Color', colorForm);
             setColorSuccess(`Đã thêm màu "${colorForm.name}" thành công!`);
@@ -37,6 +39,8 @@ export default function PropertiesPage() {
             setTimeout(() => setColorSuccess(''), 3000);
         } catch (err) {
             setColorError(err.response?.data?.message || 'Lỗi khi thêm màu.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -44,6 +48,7 @@ export default function PropertiesPage() {
         e.preventDefault();
         setSizeError('');
         setSizeSuccess('');
+        setIsSubmitting(true);
         try {
             await api.post('/Size', sizeForm);
             setSizeSuccess(`Đã thêm kích thước "${sizeForm.name}" thành công!`);
@@ -52,13 +57,47 @@ export default function PropertiesPage() {
             setTimeout(() => setSizeSuccess(''), 3000);
         } catch (err) {
             setSizeError(err.response?.data?.message || 'Lỗi khi thêm size.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteColor = async (id, name) => {
+        if (!window.confirm(`Bạn có chắc muốn xoá màu "${name}"?`)) return;
+        setIsSubmitting(true);
+        try {
+            await api.delete(`/Color/${id}`);
+            setColorSuccess(`Đã xoá màu "${name}" thành công!`);
+            fetchAll();
+            setTimeout(() => setColorSuccess(''), 3000);
+        } catch (err) {
+            setColorError(err.response?.data?.message || 'Lỗi khi xoá màu. Có thể màu này đang được sử dụng ở đâu đó.');
+            setTimeout(() => setColorError(''), 5000);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteSize = async (id, name) => {
+        if (!window.confirm(`Bạn có chắc muốn xoá kích thước "${name}"?`)) return;
+        setIsSubmitting(true);
+        try {
+            await api.delete(`/Size/${id}`);
+            setSizeSuccess(`Đã xoá kích thước "${name}" thành công!`);
+            fetchAll();
+            setTimeout(() => setSizeSuccess(''), 3000);
+        } catch (err) {
+            setSizeError(err.response?.data?.message || 'Lỗi khi xoá kích thước. Có thể kích thước này đang được sử dụng.');
+            setTimeout(() => setSizeError(''), 5000);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
         <div>
             <h2 className="page-title">🎨 Màu sắc & Kích thước</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            <div className="admin-properties-grid">
 
                 <div className="card">
                     <div className="card-header">
@@ -97,7 +136,9 @@ export default function PropertiesPage() {
                                 />
                             </div>
                         </div>
-                        <button type="submit" className="btn btn-primary btn-sm">+ Thêm màu</button>
+                        <button type="submit" className="btn btn-primary btn-sm" disabled={isSubmitting}>
+                            {isSubmitting ? 'Đang tải...' : '+ Thêm màu'}
+                        </button>
                     </form>
                     <hr className="divider" />
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
@@ -108,6 +149,15 @@ export default function PropertiesPage() {
                                 <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: 'var(--bg)', borderRadius: 20, border: '1px solid var(--border)' }}>
                                     <span style={{ width: 14, height: 14, borderRadius: '50%', background: c.hex, border: '1px solid #ddd' }} />
                                     <span style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</span>
+                                    <button 
+                                        type="button" 
+                                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, marginLeft: 4, display: 'flex', alignItems: 'center', color: 'var(--danger)', opacity: 0.6 }}
+                                        onClick={() => handleDeleteColor(c.id, c.name)}
+                                        disabled={isSubmitting}
+                                        title="Xoá Màu"
+                                        onMouseEnter={(e) => e.target.style.opacity = 1}
+                                        onMouseLeave={(e) => e.target.style.opacity = 0.6}
+                                    >✖</button>
                                 </div>
                             ))
                         )}
@@ -132,7 +182,9 @@ export default function PropertiesPage() {
                                 required
                             />
                         </div>
-                        <button type="submit" className="btn btn-primary btn-sm">+ Thêm size</button>
+                        <button type="submit" className="btn btn-primary btn-sm" disabled={isSubmitting}>
+                            {isSubmitting ? 'Đang tải...' : '+ Thêm size'}
+                        </button>
                     </form>
                     <hr className="divider" />
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -140,8 +192,17 @@ export default function PropertiesPage() {
                             <p className="text-muted">Chưa có kích thước nào</p>
                         ) : (
                             sizes.map(s => (
-                                <span key={s.id} style={{ padding: '6px 16px', border: '2px solid var(--primary)', color: 'var(--primary)', borderRadius: 8, fontWeight: 600, fontSize: 13 }}>
+                                <span key={s.id} style={{ padding: '6px 16px', border: '2px solid var(--primary)', color: 'var(--primary)', borderRadius: 8, fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
                                     {s.name}
+                                    <button 
+                                        type="button" 
+                                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: 'var(--danger)', opacity: 0.7, fontSize: 14 }}
+                                        onClick={() => handleDeleteSize(s.id, s.name)}
+                                        disabled={isSubmitting}
+                                        title="Xoá Kích thước"
+                                        onMouseEnter={(e) => e.target.style.opacity = 1}
+                                        onMouseLeave={(e) => e.target.style.opacity = 0.7}
+                                    >✖</button>
                                 </span>
                             ))
                         )}

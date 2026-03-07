@@ -129,7 +129,7 @@ export default function HomePage() {
                                                         {newProducts.map((p, i) => <VariantCard key={`${p.productId} - ${p.colorId ?? i}`} item={p} />)}
                                                 </div>
                                                 <div style={{ textAlign: 'center', marginTop: 32 }}>
-                                                        <Link to="/san-pham?filter=new" className="btn-athea-outline">Xem thêm</Link>
+                                                        <Link to="/san-pham?filter=new" className="btn-athea-outline" style={{ display: 'inline-flex' }}>Xem thêm</Link>
                                                 </div>
                                         </div>
                                 </section>
@@ -148,7 +148,7 @@ export default function HomePage() {
                                                         {saleProducts.map((p, i) => <VariantCard key={`${p.productId} - ${p.colorId ?? i}`} item={p} />)}
                                                 </div>
                                                 <div style={{ textAlign: 'center', marginTop: 32 }}>
-                                                        <Link to="/san-pham?filter=sale" className="btn-athea-outline">Xem thêm</Link>
+                                                        <Link to="/san-pham?filter=sale" className="btn-athea-outline" style={{ display: 'inline-flex' }}>Xem thêm</Link>
                                                 </div>
                                         </div>
                                 </section>

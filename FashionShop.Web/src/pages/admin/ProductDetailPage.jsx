@@ -40,13 +40,18 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
         });
     };
 
-    const addUrls = () => {
-        const lines = urlInput.split('\n').map(s => s.trim()).filter(s => s.startsWith('http'));
-        if (!lines.length) return;
+    const addUrls = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const rawLines = urlInput.split(/[,\n]/).map(s => s.trim()).filter(s => s.length > 5);
+        if (!rawLines.length) return;
+
+        const lines = rawLines.map(s => s.startsWith('http') ? s : `https://${s}`);
+        
         const newItems = lines.map(u => ({
             id: Math.random().toString(36).slice(2),
             type: 'url', previewUrl: u, url: u, isMain: false, status: 'pending',
         }));
+        
         setImgItems(prev => {
             const merged = [...prev, ...newItems];
             if (!merged.some(i => i.isMain) && merged.length > 0)
@@ -66,12 +71,15 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
     const removeImg = async (item) => {
         if (!window.confirm('Bạn có chắc chắn muốn xóa ảnh này không?')) return;
         if (item.status === 'saved' && item.id) {
+            setSaving(true);
             try {
                 await api.delete(`/Product/${productId}/images/${item.id}`);
             } catch {
                 alert('Lỗi khi xoá ảnh');
+                setSaving(false);
                 return;
             }
+            setSaving(false);
         }
         setImgItems(prev => prev.filter(i => i.id !== item.id));
     };
@@ -165,125 +173,135 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
     };
 
     return (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-            <div className="modal" style={{ maxWidth: 680, width: '95%' }}>
-                <div className="modal-header">
-                    <h3 className="modal-title">{isEdit ? '✏️ Sửa sản phẩm chi tiết' : '➕ Thêm sản phẩm chi tiết'}</h3>
-                    <button className="modal-close" onClick={onClose}>✖</button>
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()} style={{ backdropFilter: 'blur(8px)', background: 'rgba(0,0,0,0.4)' }}>
+            <div className="modal-premium">
+                <div className="modal-header" style={{ padding: '20px 24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ background: 'var(--admin-bg)', width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                            {isEdit ? '✏️' : '➕'}
+                        </div>
+                        <h3 className="modal-title" style={{ margin: 0 }}>{isEdit ? 'Sửa sản phẩm chi tiết' : 'Thêm sản phẩm chi tiết'}</h3>
+                    </div>
+                    <button className="modal-close" onClick={onClose} style={{ top: 20, right: 24 }}>✖</button>
                 </div>
-                {err && <div className="alert alert-danger" style={{ margin: '0 24px' }}>{err}</div>}
-                <div className="modal-body">
-                    <div className="form-group">
-                        <label>Màu sắc *</label>
-                        <select className="form-control" value={selectedColor} onChange={e => setSelectedColor(e.target.value)} disabled={isEdit}>
+
+                <div className="modal-body-scroll">
+                    {err && <div className="alert alert-danger" style={{ marginBottom: 20 }}>{err}</div>}
+                    
+                    {/* Section 1: Color Selection */}
+                    <div className="form-group" style={{ marginBottom: 24 }}>
+                        <label style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, display: 'block' }}>Màu sắc đại diện *</label>
+                        <select className="form-control" value={selectedColor} onChange={e => setSelectedColor(e.target.value)} disabled={isEdit} style={{ height: 44, borderRadius: 10, background: isEdit ? '#f8fafc' : '#fff' }}>
                             <option value="">— Chọn màu —</option>
                             {colors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
-                    <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                            <label style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>Kích thước</label>
-                            {!isEdit && (
-                                <button type="button" className="btn btn-outline btn-sm"
-                                    onClick={() => setSizeRows(r => [...r, { variantId: null, sizeId: '', price: '', stock: 0 }])}>
-                                    + Thêm size
-                                </button>
-                            )}
+
+                    {/* Section 2: Size & Price Grid */}
+                    <div style={{ marginBottom: 32 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                            <label style={{ fontWeight: 700, fontSize: 13, margin: 0 }}>Kích thước & Giá riêng</label>
+                            <button type="button" className="btn btn-primary btn-sm" style={{ padding: '6px 12px', fontSize: 11, borderRadius: 8 }}
+                                onClick={() => setSizeRows(r => [...r, { variantId: null, sizeId: '', price: '', stock: 0 }])}>
+                                + Thêm dòng
+                            </button>
                         </div>
+                        
                         {sizeRows.map((row, idx) => (
-                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr auto', gap: 8, marginBottom: 8, alignItems: 'flex-end' }}>
-                                <div>
-                                    {idx === 0 && <label style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>Size *</label>}
+                            <div key={idx} className="size-row-item">
+                                <div style={{ minWidth: 0 }}>
                                     {row.variantId
-                                        ? <div className="form-control" style={{ background: '#f5f6fa', color: '#6b7280', fontWeight: 600 }}>
+                                        ? <div className="form-control" style={{ background: '#fff', color: 'var(--admin-primary)', fontWeight: 700, border: 'none', height: 40, display: 'flex', alignItems: 'center', padding: '0 12px' }}>
                                             {sizes.find(s => s.id === row.sizeId)?.name || row.sizeId}
-                                        </div>
-                                        : <select className="form-control" value={row.sizeId}
+                                          </div>
+                                        : <select className="form-control" value={row.sizeId} style={{ height: 40, borderRadius: 8 }}
                                             onChange={e => setSizeRows(rows => rows.map((r, i) => i === idx ? { ...r, sizeId: e.target.value } : r))}>
-                                            <option value="">Chọn size</option>
+                                            <option value="">Size</option>
                                             {sortSizes(sizes).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </select>
+                                          </select>
                                     }
                                 </div>
-                                <div>
-                                    {idx === 0 && <label style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>Giá riêng (VND)</label>}
-                                    <input className="form-control" type="number" placeholder="= giá gốc"
-                                        value={row.price}
+                                <div style={{ position: 'relative' }}>
+                                    <input className="form-control" type="number" placeholder="= giá mặc định"
+                                        value={row.price} style={{ height: 40, borderRadius: 8, paddingRight: 35 }}
                                         onChange={e => setSizeRows(rows => rows.map((r, i) => i === idx ? { ...r, price: e.target.value } : r))} />
+                                    <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#94a3b8', pointerEvents: 'none' }}>₫</span>
                                 </div>
-                                {!row.variantId && (
-                                    <button type="button" className="btn btn-danger btn-sm"
-                                        onClick={() => setSizeRows(rows => rows.filter((_, i) => i !== idx))}
-                                        style={{ alignSelf: 'flex-end', height: 38 }}>🗑️</button>
-                                )}
+                                <button type="button" className="btn btn-danger btn-sm"
+                                    onClick={() => setSizeRows(rows => rows.filter((_, i) => i !== idx))}
+                                    style={{ width: 40, height: 40, padding: 0, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>🗑️</button>
                             </div>
                         ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 12, marginTop: 20 }}>
-                        <div
-                            onDragOver={e => { e.preventDefault(); setMainDragOver(true); }}
-                            onDragLeave={() => setMainDragOver(false)}
-                            onDrop={e => {
-                                e.preventDefault(); setMainDragOver(false);
-                                if (dragId) setMain(dragId);
-                            }}
-                            style={{
-                                width: 160, height: 160, borderRadius: 14, overflow: 'hidden',
-                                border: mainDragOver ? '3px dashed var(--primary)' : '3px dashed #d1d5db',
-                                background: mainDragOver ? '#f0eeff' : '#f9fafb',
-                                display: 'flex', flexDirection: 'column',
-                                alignItems: 'center', justifyContent: 'center',
-                                position: 'relative', transition: 'all 0.2s', cursor: 'default',
-                                boxShadow: mainDragOver ? '0 0 0 4px #ede9ff' : 'none',
-                            }}
-                        >
-                            {(() => {
-                                const main = imgItems.find(i => i.isMain);
-                                return main ? (
-                                    <>
-                                        <img src={main.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
-                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.28)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '10px' }}>
-                                            <div style={{ background: 'var(--primary)', color: 'white', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                ⭐ Ảnh chính
-                                            </div>
+
+                    {/* Section 3: Image Studio */}
+                    <div className="image-studio">
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, width: '100%', alignItems: 'flex-start' }}>
+                            <div className="main-image-zone"
+                                onDragOver={e => { e.preventDefault(); setMainDragOver(true); }}
+                                onDragLeave={() => setMainDragOver(false)}
+                                onDrop={e => {
+                                    e.preventDefault(); setMainDragOver(false);
+                                    if (dragId) setMain(dragId);
+                                }}
+                                style={{
+                                    borderStyle: mainDragOver ? 'dashed' : 'solid',
+                                    borderColor: mainDragOver ? 'var(--admin-primary)' : '#fff',
+                                    background: '#f8fafc'
+                                }}
+                            >
+                                {(() => {
+                                    const main = imgItems.find(i => i.isMain);
+                                    return main ? (
+                                        <>
+                                            <img src={main.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <div className="main-image-badge">⭐ Ảnh chính</div>
+                                        </>
+                                    ) : (
+                                        <div style={{ textAlign: 'center', color: '#94a3b8', padding: 10, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                            <div style={{ fontSize: 24, marginBottom: 4 }}>📸</div>
+                                            <div style={{ fontSize: 9, lineHeight: 1.2, fontWeight: 600 }}>KÉO ẢNH<br/>VÀO ĐÂY</div>
                                         </div>
-                                    </>
-                                ) : (
-                                    <div style={{ textAlign: 'center', color: '#9ca3af', padding: 10 }}>
-                                        <div style={{ fontSize: 32, marginBottom: 6 }}>📸</div>
-                                        <div style={{ fontSize: 11, lineHeight: 1.4 }}>Kéo ảnh vào đây<br />để Đặt làm chính</div>
+                                    );
+                                })()}
+                            </div>
+                            
+                            <div style={{ flex: 1, minWidth: 'min(100%, 300px)' }}>
+                                <label style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, display: 'block' }}>Bộ sưu tập ảnh</label>
+                                <div className="thumb-list">
+                                    {imgItems.map(item => (
+                                        <div key={item.id} draggable onDragStart={() => setDragId(item.id)} onDragEnd={() => setDragId(null)}
+                                            className={`thumb-item ${item.isMain ? 'active' : ''}`}
+                                            onClick={() => setMain(item.id)}
+                                        >
+                                            <img src={item.previewUrl} alt="" />
+                                            <button onClick={(e) => { e.stopPropagation(); removeImg(item); }} style={{ position: 'absolute', top: -6, right: -6, background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: 18, height: 18, fontSize: 10, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✖</button>
+                                        </div>
+                                    ))}
+                                    <div onClick={() => fileInputRef.current.click()} style={{ width: 64, height: 64, border: '2px dashed #cbd5e1', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#fff', color: '#94a3b8', fontSize: 20, flexShrink: 0 }}>
+                                        ➕
+                                        <input type="file" hidden ref={fileInputRef} multiple accept="image/*" onChange={e => addFiles(e.target.files)} />
                                     </div>
-                                );
-                            })()}
-                        </div>
-                        <div className="image-manager-list" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            <div className="thumbnail-strip" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6 }}>
-                                {imgItems.map(item => (
-                                    <div key={item.id} draggable onDragStart={() => setDragId(item.id)} onDragEnd={() => setDragId(null)}
-                                        style={{ width: 60, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative', border: item.isMain ? '2px solid var(--primary)' : '1px solid #ddd', flexShrink: 0, cursor: 'grab' }}>
-                                        <img src={item.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        <button className="remove-img-btn" onClick={() => removeImg(item)} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(239,68,68,0.8)', color: 'white', border: 'none', borderRadius: '50%', width: 16, height: 16, fontSize: 10, cursor: 'pointer' }}>✖</button>
-                                    </div>
-                                ))}
-                                <div className="add-img-box" onClick={() => fileInputRef.current.click()} style={{ width: 60, height: 60, border: '2px dashed #ddd', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                    ➕
-                                    <input type="file" hidden ref={fileInputRef} multiple accept="image/*" onChange={e => addFiles(e.target.files)} />
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                                <input className="form-control" placeholder="https://... (URL ảnh)"
-                                    value={urlInput} onChange={e => setUrlInput(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && addUrls()}
-                                    style={{ flex: 1, fontSize: 12 }} />
-                                <button type="button" className="btn btn-outline btn-sm" onClick={addUrls} style={{ whiteSpace: 'nowrap' }}>+</button>
-                            </div>
                         </div>
+                        <div className="url-add-bar">
+                            <input className="form-control" placeholder="Dán link ảnh (Cloudinary, Vercel Blob...)"
+                                value={urlInput} onChange={e => setUrlInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && addUrls(e)} />
+                            <button type="button" className="btn-url-add" onClick={addUrls}>
+                                ✨ Thêm link
+                            </button>
+                        </div>
+                        <p style={{ fontSize: 11, color: '#94a3b8', margin: 0, textAlign: 'center' }}>💡 Mẹo: Kéo thả các ảnh nhỏ vào khung bên trái để đặt làm ảnh đại diện chính cho màu này.</p>
                     </div>
-                    {imgItems.length > 0 && <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>👉 Kéo thumbnail vào ô trái để đặt làm ảnh chính</p>}
                 </div>
-                <div className="modal-footer">
-                    <button className="btn btn-outline" onClick={onClose}>Hủy</button>
-                    <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? '⏳ Đang lưu...' : '💾 Lưu'}</button>
+
+                <div className="modal-footer-sticky">
+                    <button className="btn btn-outline" onClick={onClose} style={{ borderRadius: 10, padding: '10px 24px', fontWeight: 600 }}>Hủy bỏ</button>
+                    <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ borderRadius: 10, padding: '10px 32px', fontWeight: 700, minWidth: 120 }}>
+                        {saving ? '⏳ Đang lưu...' : '🚀 Lưu thay đổi'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -297,6 +315,7 @@ export default function ProductDetailPage() {
     const [sizes, setSizes] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [editTarget, setEditTarget] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fetchProduct = useCallback(async () => {
         const { data } = await api.get(`/Product/${id}`);
@@ -332,15 +351,24 @@ export default function ProductDetailPage() {
 
     const handleDeleteVariant = async (variantId) => {
         if (!window.confirm('Xóa biến thể (size) này?')) return;
-        await api.delete(`/Product/${id}/variants/${variantId}`);
-        fetchProduct();
+        setIsSubmitting(true);
+        try {
+            await api.delete(`/Product/${id}/variants/${variantId}`);
+            fetchProduct();
+        } catch { alert('Lỗi khi xoá'); }
+        finally { setIsSubmitting(false); }
     };
 
     return (
         <div>
-            <h2 className="page-title">
-                👗 Thuộc tính: {product.name}
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2 className="page-title" style={{ margin: 0 }}>
+                    👗 Thuộc tính: {product.name}
+                </h2>
+                <button className="btn btn-primary" onClick={() => { setEditTarget(null); setShowModal(true); }}>
+                    + Thêm màu & chi tiết
+                </button>
+            </div>
             {productDetails.length === 0 ? (
                 <div className="card">
                     <div className="empty-state" style={{ padding: '60px 20px' }}>
@@ -351,57 +379,51 @@ export default function ProductDetailPage() {
                     </div>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 20 }}>
                     {productDetails.map(detail => {
                         const mainImg = detail.images.find(i => i.isMain) || detail.images[0];
                         return (
-                            <div key={detail.color.id} className="card">
-                                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr auto', gap: 20, alignItems: 'start' }}>
-                                    <div style={{ position: 'relative' }}>
-                                        <div style={{ width: 100, height: 100, borderRadius: 10, overflow: 'hidden', background: '#f5f0eb', border: '2px solid var(--border)' }}>
-                                            {mainImg
-                                                ? <img src={mainImg.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#d1c4b5' }}>🖼️</div>
-                                            }
-                                        </div>
+                            <div key={detail.color.id} className="variant-card">
+                                <div style={{ display: 'flex', gap: 20, alignItems: 'start' }}>
+                                    {/* Left: Image Preview */}
+                                    <div className="variant-img-preview" style={{ position: 'relative' }}>
+                                        {mainImg
+                                            ? <img src={mainImg.imageUrl} alt="" />
+                                            : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#cbd5e1' }}>🖼️</div>
+                                        }
                                         {detail.images.length > 1 && (
-                                            <div style={{ position: 'absolute', bottom: -6, right: -6, background: 'var(--primary)', color: 'white', fontSize: 10, fontWeight: 700, borderRadius: 10, padding: '2px 6px', border: '2px solid white' }}>
+                                            <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: 'white', fontSize: 10, fontWeight: 700, borderRadius: 6, padding: '2px 6px', border: '1px solid rgba(255,255,255,0.2)' }}>
                                                 +{detail.images.length - 1}
                                             </div>
                                         )}
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                <span style={{ width: 16, height: 16, borderRadius: '50%', background: detail.color.hex, border: '1px solid #ccc', display: 'inline-block', flexShrink: 0 }} />
-                                                <strong style={{ fontSize: 15 }}>{detail.color.name}</strong>
-                                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>• {detail.images.length} ảnh</span>
+
+                                    {/* Right: Info & SKU Grid */}
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div className="variant-header-info" style={{ borderBottom: 'none', marginBottom: 12 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                                                <div className="variant-color-dot" style={{ background: detail.color.hex }} />
+                                                <strong style={{ fontSize: 16 }}>{detail.color.name}</strong>
+                                                <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>• {detail.variants.length} SKU</span>
                                             </div>
-                                            <div>
-                                                <button className="btn btn-outline btn-sm" onClick={() => handleEdit(detail)}>✏️ Sửa / Ảnh</button>
-                                            </div>
+                                            <button className="btn btn-outline btn-sm" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => handleEdit(detail)}>
+                                                ✏️ Sửa / Ảnh
+                                            </button>
                                         </div>
-                                        <div className="table-wrapper">
-                                            <table style={{ fontSize: 13, width: '100%' }}>
-                                                <thead>
-                                                    <tr>
-                                                        <th style={{ width: '80px', textAlign: 'left' }}>Size</th>
-                                                        <th style={{ textAlign: 'left' }}>Giá riêng</th>
-                                                        <th style={{ width: '60px', textAlign: 'right' }}></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {sortSizes(detail.variants, 'sizeName').map(v => (
-                                                        <tr key={v.id}>
-                                                            <td style={{ textAlign: 'left' }}><span className="badge badge-primary">{v.sizeName}</span></td>
-                                                            <td style={{ textAlign: 'left' }}>
-                                                                {v.price ? <strong style={{ color: 'var(--primary)' }}>{v.price.toLocaleString('vi-VN')}</strong> : <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Giá gốc</span>}
-                                                            </td>
-                                                            <td style={{ textAlign: 'right' }}><button className="btn btn-danger btn-sm" onClick={() => handleDeleteVariant(v.id)}>🗑️</button></td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+
+                                        <div className="sku-grid">
+                                            {sortSizes(detail.variants, 'sizeName').map(v => (
+                                                <div key={v.id} className="sku-item">
+                                                    <span className="variant-size-badge">{v.sizeName}</span>
+                                                    {v.price 
+                                                        ? <span className="variant-price-tag">{v.price.toLocaleString('vi-VN')}₫</span> 
+                                                        : <span className="variant-price-default">Mặc định</span>
+                                                    }
+                                                    <button className="sku-delete-btn" title="Xóa" onClick={() => handleDeleteVariant(v.id)} disabled={isSubmitting}>
+                                                        ✖
+                                                    </button>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>

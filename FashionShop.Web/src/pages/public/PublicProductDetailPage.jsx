@@ -56,7 +56,14 @@ export default function ProductDetailPage() {
             setSelectedSize(null);
 
             const colorImages = targetColor ? (p.data.images || []).filter(i => i.colorId === targetColor) : (p.data.images || []);
-            const mainImg = colorImages.find(i => i.isMain) || colorImages[0] || (!targetColor ? p.data.images?.[0] : null);
+            
+            // Tìm ảnh chính: Ưu tiên ảnh chính của màu đã chọn -> Ảnh đầu tiên của màu -> Ảnh chính toàn cục -> Ảnh đầu tiên toàn cục
+            const mainImg = colorImages.find(i => i.isMain) 
+                || colorImages[0] 
+                || (p.data.images || []).find(i => i.isMain) 
+                || p.data.images?.[0] 
+                || null;
+
             setActiveImg(mainImg);
 
             const map = {};
@@ -96,11 +103,11 @@ export default function ProductDetailPage() {
         ? (product.variants || []).filter(v => v.colorId === selectedColor).map(v => ({ id: v.sizeId, name: v.sizeName, stock: v.stock }))
         : [...new Map((product.variants || []).map(v => [v.sizeId, { id: v.sizeId, name: v.sizeName, stock: v.stock }])).values()];
 
-    // Ảnh tất cả
-    const images = product.images || [];
+    // Ảnh tất cả: Sắp xếp để ảnh isMain luôn lên đầu
+    const images = (product.images || []).sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
     const displayImages = selectedColor ? images.filter(i => i.colorId === selectedColor) : images;
 
-    const mainDisplayImg = activeImg || displayImages[0] || null;
+    const mainDisplayImg = activeImg || displayImages[0] || (product.mainImageUrl ? { imageUrl: product.mainImageUrl } : null);
 
     // Giá theo biến thể đang chọn
     const currentVariant = product.variants?.find(v => v.colorId === selectedColor && v.sizeId === selectedSize);
@@ -138,8 +145,8 @@ export default function ProductDetailPage() {
                             <span className="breadcrumb-sep">/</span>
                             <Link to={`/danh-muc/${product.categorySlug}`}>{product.categoryName}</Link>
                         </>}
-                        <span className="breadcrumb-sep">:</span>
-                        <span>{product.name}</span>
+                        <span className="breadcrumb-sep">/</span>
+                        <span style={{ color: 'var(--pub-text)', fontWeight: 500 }}>{product.name}</span>
                     </div>
 
                     <div className="product-detail-grid">
@@ -213,7 +220,11 @@ export default function ProductDetailPage() {
                                                     setSelectedSize(null);
 
                                                     const colorImages = images.filter(i => i.colorId === newColor);
-                                                    const matchingImg = colorImages.find(i => i.isMain) || colorImages[0] || null;
+                                                    const matchingImg = colorImages.find(i => i.isMain) 
+                                                        || colorImages[0] 
+                                                        || images.find(i => i.isMain) 
+                                                        || (images[0] ? images[0] : (product.mainImageUrl ? { imageUrl: product.mainImageUrl } : null));
+
                                                     setActiveImg(matchingImg);
                                                 }}
                                                 style={{
@@ -247,25 +258,27 @@ export default function ProductDetailPage() {
                             )}
 
                             {/* Nút liên hệ mua hàng */}
-                            <div className="product-actions-athea" style={{ display: 'flex', gap: 12, marginTop: 32, paddingBottom: 16 }}>
-                                {zaloUrl && (
-                                    <a href={zaloUrl} target="_blank" rel="noreferrer" className="btn-contact-social btn-contact-zalo">
-                                        <div className="social-icon-wrapper">
-                                            <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg" alt="Zalo" />
-                                        </div>
-                                        <span>Zalo Mua Hàng</span>
-                                    </a>
-                                )}
-                                {fbUrl && (
-                                    <a href={fbUrl} target="_blank" rel="noreferrer" className="btn-contact-social btn-contact-fb">
-                                        <div className="social-icon-wrapper">
-                                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                                <path d="M12 2.03998C6.5 2.03998 2 6.52998 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.84998C10.44 7.33998 11.93 5.95998 14.22 5.95998C15.31 5.95998 16.45 6.14998 16.45 6.14998V8.61998H15.19C13.95 8.61998 13.56 9.38998 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.52998 17.5 2.03998 12 2.03998Z" />
-                                            </svg>
-                                        </div>
-                                        <span>Facebook Mua Hàng</span>
-                                    </a>
-                                )}
+                            <div className="product-actions-wrapper">
+                                <div className="product-actions-athea">
+                                    {zaloUrl && (
+                                        <a href={zaloUrl} target="_blank" rel="noreferrer" className="btn-contact-social btn-contact-zalo">
+                                            <div className="social-icon-wrapper">
+                                                <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg" alt="Zalo" />
+                                            </div>
+                                            <span>Zalo Mua Hàng</span>
+                                        </a>
+                                    )}
+                                    {fbUrl && (
+                                        <a href={fbUrl} target="_blank" rel="noreferrer" className="btn-contact-social btn-contact-fb">
+                                            <div className="social-icon-wrapper">
+                                                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                                    <path d="M12 2.03998C6.5 2.03998 2 6.52998 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.84998C10.44 7.33998 11.93 5.95998 14.22 5.95998C15.31 5.95998 16.45 6.14998 16.45 6.14998V8.61998H15.19C13.95 8.61998 13.56 9.38998 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.52998 17.5 2.03998 12 2.03998Z" />
+                                                </svg>
+                                            </div>
+                                            <span>Facebook Mua Hàng</span>
+                                        </a>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Accordion Chi tiết & Lưu ý & Đổi trả */}
@@ -307,32 +320,40 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
                         <div style={{ position: 'relative' }}>
-                            <button onClick={() => { document.getElementById('related-grid').scrollBy({ left: -300, behavior: 'smooth' }) }} style={{ position: 'absolute', left: -20, top: '40%', transform: 'translateY(-50%)', zIndex: 10, background: '#fff', border: '1px solid #ddd', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>{'<'}</button>
-                            <button onClick={() => { document.getElementById('related-grid').scrollBy({ left: 300, behavior: 'smooth' }) }} style={{ position: 'absolute', right: -20, top: '40%', transform: 'translateY(-50%)', zIndex: 10, background: '#fff', border: '1px solid #ddd', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>{'>'}</button>
-                            <div id="related-grid" className="product-grid" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 20, paddingBottom: 20, scrollBehavior: 'smooth', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-                                {related.map(p => (
-                                    <div key={p.productId} className="product-card" style={{ flex: '0 0 auto', width: '250px', scrollSnapAlign: 'start' }} onClick={() => navigate(`/san-pham/${p.slug}`)}>
-                                        <div className="product-card-img">
-                                            {p.mainImageUrl
-                                                ? <img src={p.mainImageUrl} alt={p.productName} loading="lazy" />
-                                                : <div className="product-card-img-placeholder">🖼️</div>
-                                            }
-                                            <div className="product-labels">
-                                                {p.isNew && <span className="label-new">NEW</span>}
-                                                {p.isOnSale && <span className="label-sale">SALE</span>}
-                                            </div>
-                                        </div>
-                                        <div className="product-card-body">
-                                            <div className="product-card-name">{p.productName}</div>
-                                            <div className="product-card-price">
-                                                {p.isOnSale && p.salePrice
-                                                    ? <><span className="price-current">{p.salePrice.toLocaleString('vi-VN')}₫</span><span className="price-origin">{p.basePrice.toLocaleString('vi-VN')}₫</span></>
-                                                    : <span className="price-tag">{p.basePrice?.toLocaleString('vi-VN')}₫</span>
+                            <button className="nav-arrow-btn left" onClick={() => { document.getElementById('related-grid').scrollBy({ left: -300, behavior: 'smooth' }) }}>{'<'}</button>
+                            <button className="nav-arrow-btn right" onClick={() => { document.getElementById('related-grid').scrollBy({ left: 300, behavior: 'smooth' }) }}>{'>'}</button>
+                            <div id="related-grid" className="product-grid related-grid-scroll">
+                                {related.map(p => {
+                                    const displayPrice = p.isOnSale && p.salePrice ? p.salePrice : p.basePrice;
+
+                                    return (
+                                        <div key={p.productId} className="vcard vcard-related" onClick={() => navigate(`/san-pham/${p.slug}`)}>
+                                            <div className="vcard-img">
+                                                {p.mainImageUrl
+                                                    ? <img src={p.mainImageUrl} alt={p.productName} loading="lazy" />
+                                                    : <div className="vcard-placeholder">🖼️</div>
                                                 }
+                                                <div className="vcard-labels">
+                                                    {p.isNew && <span className="label-new">NEW</span>}
+                                                    {p.isOnSale && <span className="label-sale">SALE</span>}
+                                                </div>
+                                            </div>
+                                            <div className="vcard-body">
+                                                <div className="vcard-price">
+                                                    {p.isOnSale && p.salePrice ? (
+                                                        <>
+                                                            <span className="vcard-price-sale">{displayPrice.toLocaleString('vi-VN')}₫</span>
+                                                            <span className="vcard-price-origin">{p.basePrice.toLocaleString('vi-VN')}₫</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="vcard-price-normal">{displayPrice?.toLocaleString('vi-VN')}₫</span>
+                                                    )}
+                                                </div>
+                                                <div className="vcard-name">{p.productName}</div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>

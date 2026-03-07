@@ -1,6 +1,6 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const navItems = [
     { to: '/admin', label: 'Dashboard', icon: '📊', end: true },
@@ -13,64 +13,107 @@ const navItems = [
 export default function AdminLayout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Close mobile menu when route changes
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [location]);
 
     const handleLogout = () => {
         logout();
         navigate('/admin/login');
     };
-
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    
+    // Auto-generate a title based on the active path
+    const getPageTitle = () => {
+        const activeItem = navItems.find(item => item.to === location.pathname || (item.to !== '/admin' && location.pathname.startsWith(item.to)));
+        return activeItem ? activeItem.label : 'Quản trị';
+    };
 
     return (
-        <div className="admin-layout">
-            {/* Mobile Header (Visible only on small screens) */}
-            <div className="admin-mobile-header">
-                <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
+        <div className="admin-wrapper">
+            {/* 1. Mobile Top Navigation Bar */}
+            <div className="admin-mobile-topbar">
+                <button 
+                    className="admin-hamburger" 
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    aria-label="Menu"
+                >
                     ☰
                 </button>
-                <div className="admin-mobile-logo">ATHEA</div>
+                <div className="admin-mobile-brand">ATHEA Admin</div>
+                <div style={{ width: 44 }}></div> {/* Spacer for symmetry */}
             </div>
 
-            {/* Sidebar Overlay */}
-            {isSidebarOpen && (
-                <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
-            )}
+            {/* 2. Backdrop for Mobile Drawer */}
+            <div 
+                className={`admin-backdrop ${isMobileMenuOpen ? 'active' : ''}`} 
+                onClick={() => setIsMobileMenuOpen(false)}
+            />
 
-            {/* Sidebar */}
-            <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-                <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60px', overflow: 'hidden', padding: '0' }}>
-                    <img src="/logo.png" alt="ATHEA Logo" style={{ maxHeight: '120px', marginLeft: '-20px', marginTop: '7px', objectFit: 'contain', filter: 'brightness(0)' }} />
-                    <button className="sidebar-close-btn" onClick={() => setIsSidebarOpen(false)}>✕</button>
+            {/* 3. Sidebar (Fixed Desktop / Drawer Mobile) */}
+            <aside className={`admin-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+                <div className="admin-sidebar-header">
+                    <img src="/logo.png" alt="ATHEA Logo" className="admin-sidebar-logo" />
+                    <button 
+                        className="admin-sidebar-close" 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        ✕
+                    </button>
                 </div>
-                <nav className="sidebar-nav">
+                
+                <nav className="admin-nav-menu">
+                    <div className="admin-nav-label">QUẢN LÝ CỬA HÀNG</div>
                     {navItems.map((item) => (
                         <NavLink
                             key={item.to}
                             to={item.to}
                             end={item.end}
-                            className={({ isActive }) => isActive ? 'active' : ''}
-                            onClick={() => setIsSidebarOpen(false)}
+                            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
                         >
-                            <span className="nav-icon">{item.icon}</span>
-                            {item.label}
+                            <span className="admin-nav-icon">{item.icon}</span>
+                            <span className="admin-nav-text">{item.label}</span>
                         </NavLink>
                     ))}
                 </nav>
-                <div className="sidebar-footer">
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, padding: '0 4px' }}>
-                        👤 {user?.fullName || user?.email}
+
+                <div className="admin-sidebar-footer">
+                    <div className="admin-user-info">
+                        <div className="admin-user-avatar">
+                            {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'A'}
+                        </div>
+                        <div className="admin-user-details">
+                            <div className="admin-user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>{user?.fullName || 'Administrator'}</div>
+                            <div className="admin-user-role" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>{user?.email || 'admin@athea.cloud'}</div>
+                        </div>
                     </div>
-                    <button className="logout-btn" onClick={handleLogout}>
-                        🚪 Đăng xuất
+                    <button 
+                        className="btn btn-danger btn-sm admin-mobile-logout" 
+                        style={{ width: '100%', marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '8px', fontWeight: 600, borderRadius: 8 }} 
+                        onClick={handleLogout}
+                    >
+                        <span>Đăng xuất</span> 🚪
                     </button>
                 </div>
             </aside>
 
-            {/* Main */}
-            <div className="main-content">
-                <div className="main-body">
+            {/* 4. Main Content Area */}
+            <div className="admin-main-wrapper">
+                {/* 4a. Desktop Header */}
+                <header className="admin-desktop-header">
+                    <div className="admin-header-title">
+                        {getPageTitle()}
+                    </div>
+                </header>
+
+                {/* 4b. Content Body */}
+                <main className="admin-content-body">
                     <Outlet />
-                </div>
+                </main>
             </div>
         </div>
     );
