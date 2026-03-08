@@ -158,27 +158,25 @@ export default function HomePage() {
                         <section style={{ background: '#1c1c1c', color: 'white', padding: '40px 0' }}>
                                 <div className="container">
                                         <div className="policy-grid">
-                                                <div>
-                                                        <div style={{ fontSize: 24, marginBottom: 8 }}>🔄</div>
-                                                        <h4 style={{ fontSize: 13, fontWeight: 700, margin: '0 0 4px', textTransform: 'uppercase' }}>6 NGÀY ĐỔI SẢN PHẨM</h4>
-                                                        <p style={{ fontSize: 12, color: '#a3a3a3', margin: 0 }}>Đổi sản phẩm trong 6 ngày</p>
+                                                <div className="policy-item">
+                                                        <div className="policy-icon">🔄</div>
+                                                        <h4 className="policy-title">6 NGÀY ĐỔI SẢN PHẨM</h4>
+                                                        <p className="policy-desc">Đổi sản phẩm trong 6 ngày</p>
                                                 </div>
-                                                <div>
-                                                        <div style={{ fontSize: 24, marginBottom: 8 }}>📞</div>
-                                                        <h4 style={{ fontSize: 13, fontWeight: 700, margin: '0 0 4px', textTransform: 'uppercase' }}>
-                                                                HOTLINE {settings['Hotline'] || ''}
-                                                        </h4>
-                                                        <p style={{ fontSize: 12, color: '#a3a3a3', margin: 0 }}>Hành chính 8h00 - 17h00, T2 - CN nghỉ tết âm lịch</p>
+                                                <div className="policy-item">
+                                                        <div className="policy-icon">📞</div>
+                                                        <h4 className="policy-title">HOTLINE {settings['Hotline'] || ''}</h4>
+                                                        <p className="policy-desc">8h00 - 17h00 | T2 - CN</p>
                                                 </div>
-                                                <div>
-                                                        <div style={{ fontSize: 24, marginBottom: 8 }}>🏪</div>
-                                                        <h4 style={{ fontSize: 13, fontWeight: 700, margin: '0 0 4px', textTransform: 'uppercase' }}>HỆ THỐNG CỬA HÀNG</h4>
-                                                        <p style={{ fontSize: 12, color: '#a3a3a3', margin: 0 }}>60 cửa hàng trên toàn hệ thống</p>
+                                                <div className="policy-item">
+                                                        <div className="policy-icon">🏪</div>
+                                                        <h4 className="policy-title">HỆ THỐNG CỬA HÀNG</h4>
+                                                        <p className="policy-desc">60 chi nhánh toàn quốc</p>
                                                 </div>
-                                                <div>
-                                                        <div style={{ fontSize: 24, marginBottom: 8 }}>🚚</div>
-                                                        <h4 style={{ fontSize: 13, fontWeight: 700, margin: '0 0 4px', textTransform: 'uppercase' }}>VẬN CHUYỂN</h4>
-                                                        <p style={{ fontSize: 12, color: '#a3a3a3', margin: 0 }}>Đồng giá 25k toàn quốc</p>
+                                                <div className="policy-item">
+                                                        <div className="policy-icon">🚚</div>
+                                                        <h4 className="policy-title">VẬN CHUYỂN</h4>
+                                                        <p className="policy-desc">Đồng giá 25k toàn quốc</p>
                                                 </div>
                                         </div>
                                 </div>

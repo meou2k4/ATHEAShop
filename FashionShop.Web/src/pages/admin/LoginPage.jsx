@@ -27,10 +27,10 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="login-page">
+        <div className="admin-wrapper login-page" style={{ alignItems: 'center', justifyContent: 'center' }}>
             <div className="login-card">
-                <div className="login-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '122px', overflow: 'hidden', justifyContent: 'center', marginBottom: '12px' }}>
-                    <img src="/logo.png" alt="ATHEA" style={{ height: '200px', filter: 'brightness(0)' }} />
+                <div className="login-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '119px', overflow: 'hidden', justifyContent: 'center', marginBottom: '24px' }}>
+                    <img alt="ATHEA" src="/logo.png" style={{ height: '119px', filter: 'brightness(0)' }} />
                 </div>
                 <div style={{ textAlign: 'center' }}>
                     <p>Trang quản trị viên</p>

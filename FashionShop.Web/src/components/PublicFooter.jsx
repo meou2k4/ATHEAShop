@@ -17,7 +17,13 @@ export default function PublicFooter() {
         <footer className="footer-athea">
             <div className="container">
                 <div className="footer-athea-grid">
-                    {/* Cột 1: SẢN PHẨM */}
+                    {/* Cột 1: THƯƠNG HIỆU */}
+                    <div className="footer-athea-col">
+                        <div className="footer-logo">ATHEA<span>.</span></div>
+                        <p className="footer-slogan">Thời trang thiết kế cao cấp, tôn vinh vẻ đẹp hiện đại của phụ nữ Việt.</p>
+                    </div>
+
+                    {/* Cột 2: SẢN PHẨM */}
                     <div className="footer-athea-col">
                         <ul className="footer-athea-links">
                             <li className="footer-athea-col-title">SẢN PHẨM</li>
@@ -27,22 +33,28 @@ export default function PublicFooter() {
                         </ul>
                     </div>
 
-                    {/* Cột 2: Chính sách + Liên hệ */}
-                    <div className="footer-athea-col center-col">
+                    {/* Cột 3: HỖ TRỢ */}
+                    <div className="footer-athea-col">
                         <ul className="footer-athea-links">
+                            <li className="footer-athea-col-title">HỖ TRỢ KHÁCH HÀNG</li>
                             <li><Link to="/chinh-sach">CHÍNH SÁCH MUA SẮM</Link></li>
-                            <li><Link to="/lien-he">LIÊN HỆ</Link></li>
+                            <li><Link to="/lien-he">LIÊN HỆ VỚI CHÚNG TÔI</Link></li>
                         </ul>
                     </div>
 
-                    {/* Cột 3: Mạng xã hội */}
+                    {/* Cột 4: KẾT NỐI */}
                     <div className="footer-athea-col right-col">
+                        <li className="footer-athea-col-title">KẾT NỐI</li>
                         <div className="footer-athea-social">
                             <a href={settings['Facebook'] || '#'} target="_blank" rel="noreferrer" title="Facebook" className="social-icon">f</a>
                             <a href={settings['Zalo'] || '#'} target="_blank" rel="noreferrer" title="Zalo" className="social-icon">Z</a>
-                            <a href={settings['Hotline'] ? `tel:${settings['Hotline']}` : 'tel:19006650'} title="Gọi Điện" className="social-icon">📞</a>
+                            <a href={settings['Hotline'] ? `tel:${settings['Hotline']}` : 'tel:0881861533'} title="Gọi Điện" className="social-icon">📞</a>
                         </div>
                     </div>
+                </div>
+
+                <div className="footer-bottom">
+                    <div className="footer-copyright-new">©2026 Athea.vn</div>
                 </div>
             </div>
         </footer>
