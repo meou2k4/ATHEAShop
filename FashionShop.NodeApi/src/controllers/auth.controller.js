@@ -16,13 +16,71 @@ const login = async (req, res) => {
     if (!isMatch)
         return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng.' });
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
     );
 
-    return res.json({ token, email: user.email, fullName: user.fullName });
+    const refreshToken = jwt.sign(
+        { id: user.id },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+    );
+
+    // Lưu refresh token vào database
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Mặc định 7 ngày
+
+    await prisma.refreshToken.create({
+        data: {
+            token: refreshToken,
+            userId: user.id,
+            expiresAt: expiresAt
+        }
+    });
+
+    return res.json({ 
+        token: accessToken, 
+        refreshToken, 
+        email: user.email, 
+        fullName: user.fullName 
+    });
 };
 
-module.exports = { login };
+const refreshToken = async (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'Refresh token là bắt buộc.' });
+    }
+
+    try {
+        const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        
+        const storedToken = await prisma.refreshToken.findUnique({
+            where: { token: refreshToken },
+            include: { user: true }
+        });
+
+        if (!storedToken || storedToken.expiresAt < new Date()) {
+            if (storedToken) {
+                await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+            }
+            return res.status(401).json({ message: 'Refresh token không hợp lệ hoặc đã hết hạn.' });
+        }
+
+        const user = storedToken.user;
+        const newAccessToken = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
+        );
+
+        return res.json({ token: newAccessToken });
+    } catch (error) {
+        return res.status(401).json({ message: 'Refresh token không hợp lệ.' });
+    }
+};
+
+module.exports = { login, refreshToken };
