@@ -221,7 +221,20 @@ const addImage = async (req, res) => {
     const productId = +req.params.id;
     const { imageUrl, colorId, isMain, publicId } = req.body;
     if (!imageUrl) return res.status(400).json({ message: 'URL ảnh là bắt buộc.' });
+    
     try {
+        // Kiểm tra xem đã có đủ 5 ảnh cho màu sắc này chưa
+        const imageCount = await prisma.productImage.count({
+            where: {
+                productId: productId,
+                colorId: colorId ? +colorId : null
+            }
+        });
+
+        if (imageCount >= 5) {
+            return res.status(400).json({ message: 'Đã đạt giới hạn tối đa 5 ảnh cho màu sắc này.' });
+        }
+
         const image = await prisma.productImage.create({
             data: { productId, imageUrl, publicId, colorId: colorId ? +colorId : null, isMain: !!isMain },
         });

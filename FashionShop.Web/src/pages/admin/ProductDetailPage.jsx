@@ -26,7 +26,21 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
     const [err, setErr] = useState('');
 
     const addFiles = (files) => {
-        const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
+        const currentCount = imgItems.length;
+        const remainingSlot = 5 - currentCount;
+
+        if (remainingSlot <= 0) {
+            alert('Bạn chỉ có thể thêm tối đa 5 ảnh cho mỗi màu sắc.');
+            return;
+        }
+
+        let imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
+        
+        if (imgs.length > remainingSlot) {
+            alert(`Giới hạn tối đa là 5 ảnh. Chỉ có ${remainingSlot} ảnh đầu tiên được thêm.`);
+            imgs = imgs.slice(0, remainingSlot);
+        }
+
         const newItems = imgs.map(f => ({
             id: Math.random().toString(36).slice(2),
             type: 'file', file: f, previewUrl: URL.createObjectURL(f),
@@ -42,11 +56,25 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
 
     const addUrls = (e) => {
         if (e && e.preventDefault) e.preventDefault();
+        
+        const currentCount = imgItems.length;
+        const remainingSlot = 5 - currentCount;
+
+        if (remainingSlot <= 0) {
+            alert('Bạn chỉ có thể thêm tối đa 5 ảnh cho mỗi màu sắc.');
+            return;
+        }
+
         const rawLines = urlInput.split(/[,\n]/).map(s => s.trim()).filter(s => s.length > 5);
         if (!rawLines.length) return;
 
-        const lines = rawLines.map(s => s.startsWith('http') ? s : `https://${s}`);
+        let lines = rawLines.map(s => s.startsWith('http') ? s : `https://${s}`);
         
+        if (lines.length > remainingSlot) {
+            alert(`Giới hạn tối đa là 5 ảnh. Chỉ có ${remainingSlot} link đầu tiên được thêm.`);
+            lines = lines.slice(0, remainingSlot);
+        }
+
         const newItems = lines.map(u => ({
             id: Math.random().toString(36).slice(2),
             type: 'url', previewUrl: u, url: u, isMain: false, status: 'pending',

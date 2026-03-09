@@ -18,13 +18,19 @@ const login = async (req, res) => {
 
     const accessToken = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET || 'fallback-secret-for-dev-only',
         { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
     );
 
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+    if (!refreshSecret) {
+        console.error('CRITICAL: JWT_REFRESH_SECRET is not defined in environment variables.');
+        return res.status(500).json({ message: 'Lỗi cấu hình server (Thiếu JWT Secret).' });
+    }
+
     const refreshToken = jwt.sign(
         { id: user.id },
-        process.env.JWT_REFRESH_SECRET,
+        refreshSecret,
         { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
     );
 
@@ -50,13 +56,19 @@ const login = async (req, res) => {
 
 const refreshToken = async (req, res) => {
     const { refreshToken } = req.body;
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+
+    if (!refreshSecret) {
+        console.error('CRITICAL: JWT_REFRESH_SECRET is not defined.');
+        return res.status(500).json({ message: 'Lỗi cấu hình server.' });
+    }
 
     if (!refreshToken) {
         return res.status(401).json({ message: 'Refresh token là bắt buộc.' });
     }
 
     try {
-        const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const payload = jwt.verify(refreshToken, refreshSecret);
         
         const storedToken = await prisma.refreshToken.findUnique({
             where: { token: refreshToken },
