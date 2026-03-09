@@ -146,38 +146,46 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
                 throw new Error('Vui lòng chọn 1 ảnh làm ảnh chính (kéo thumbnail vào ô bên trái).');
 
             const colorId = +selectedColor;
-            const uploadedItems = [...imgItems];
-            for (let i = 0; i < uploadedItems.length; i++) {
-                const item = uploadedItems[i];
-                if (item.status !== 'pending') continue;
+            
+            // Xử lý từng ảnh một: Upload -> Lưu DB
+            const currentImgItems = [...imgItems];
+            for (let i = 0; i < currentImgItems.length; i++) {
+                const item = currentImgItems[i];
+                
+                // Nếu là ảnh mới hoặc link mới (pending)
+                if (item.status === 'pending') {
+                    // Bước 1: Upload lên server (Vercel Blob / Cloudinary)
+                    const uploadRes = await processImageOnServer(item);
+                    
+                    // Bước 2: Lưu ngay vào database
+                    await api.post(`/Product/${productId}/images`, {
+                        imageUrl: uploadRes.url,
+                        publicId: uploadRes.publicId,
+                        colorId,
+                        isMain: item.isMain,
+                    });
 
-                const uploadRes = await processImageOnServer(item);
-                uploadedItems[i] = {
-                    ...item,
-                    url: uploadRes.url,
-                    previewUrl: uploadRes.url, // Cập nhật preview bằng link Cloudinary để kiểm tra chất lượng
-                    publicId: uploadRes.publicId,
-                    status: 'uploaded'
-                };
+                    // Cập nhật trạng thái item trong mảng local
+                    currentImgItems[i] = {
+                        ...item,
+                        id: uploadRes.publicId || item.id, // Dùng ID từ server nếu có
+                        url: uploadRes.url,
+                        previewUrl: uploadRes.url,
+                        status: 'saved'
+                    };
+                } 
+                // Nếu là ảnh đã có nhưng có thay đổi (ví dụ đổi isMain)
+                else if (item.status === 'saved') {
+                    await api.put(`/Product/${productId}/images/${item.id}`, {
+                        imageUrl: item.url, 
+                        colorId, 
+                        isMain: item.isMain,
+                    });
+                }
             }
-            setImgItems(uploadedItems);
+            setImgItems(currentImgItems);
 
-            for (const item of uploadedItems) {
-                if (item.status === 'saved') continue;
-                await api.post(`/Product/${productId}/images`, {
-                    imageUrl: item.url,
-                    publicId: item.publicId,
-                    colorId,
-                    isMain: item.isMain,
-                });
-            }
-
-            for (const item of uploadedItems.filter(i => i.status === 'saved')) {
-                await api.put(`/Product/${productId}/images/${item.id}`, {
-                    imageUrl: item.url, colorId, isMain: item.isMain,
-                });
-            }
-
+            // Xử lý biến thể (size/price)
             for (const row of sizeRows) {
                 if (row.variantId) {
                     await api.put(`/Product/${productId}/variants/${row.variantId}`, {
