@@ -9,7 +9,19 @@ neonConfig.webSocketConstructor = ws;
 const globalForPrisma = global;
 
 if (!globalForPrisma.prisma) {
-    const connectionString = process.env.DATABASE_URL;
+    // Thử lấy chuỗi kết nối từ nhiều nguồn khác nhau (cho Vercel/Neon)
+    const connectionString = 
+        process.env.DATABASE_URL || 
+        process.env.Athea_POSTGRES_URL || 
+        process.env.Athea_DATABASE_URL ||
+        process.env.POSTGRES_URL;
+
+    if (!connectionString) {
+        console.error('CRITICAL ERROR: No database connection string found in environment variables!');
+        console.error('Expected one of: DATABASE_URL, Athea_POSTGRES_URL, Athea_DATABASE_URL, POSTGRES_URL');
+        throw new Error('Database connection string is missing.');
+    }
+
     const pool = new Pool({ connectionString });
     const adapter = new PrismaNeon(pool);
     
