@@ -5,22 +5,27 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(localStorage.getItem('token'));
+    const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken'));
     const [user, setUser] = useState(() => {
         const saved = localStorage.getItem('user');
         return saved ? JSON.parse(saved) : null;
     });
 
-    const login = (tokenValue, userData) => {
+    const login = (tokenValue, refreshTokenValue, userData) => {
         localStorage.setItem('token', tokenValue);
+        localStorage.setItem('refreshToken', refreshTokenValue);
         localStorage.setItem('user', JSON.stringify(userData));
         setToken(tokenValue);
+        setRefreshToken(refreshTokenValue);
         setUser(userData);
     };
 
     const logout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         setToken(null);
+        setRefreshToken(null);
         setUser(null);
     };
 

@@ -17,7 +17,7 @@ export default function LoginPage() {
         setLoading(true);
         try {
             const { data } = await api.post('/Auth/login', { email, password });
-            login(data.token, { email: data.email, fullName: data.fullName });
+            login(data.token, data.refreshToken, { email: data.email, fullName: data.fullName });
             navigate('/admin');
         } catch (err) {
             setError(err.response?.data?.message || 'Email hoặc mật khẩu không đúng.');
