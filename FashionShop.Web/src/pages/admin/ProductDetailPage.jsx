@@ -420,8 +420,8 @@ export default function ProductDetailPage() {
                                             : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#cbd5e1' }}>🖼️</div>
                                         }
                                         {detail.images.length > 1 && (
-                                            <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: 'white', fontSize: 10, fontWeight: 700, borderRadius: 6, padding: '2px 6px', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                                +{detail.images.length - 1}
+                                            <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: 'white', fontSize: 10, fontWeight: 700, borderRadius: 6, padding: '2px 8px', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                                {detail.images.length} ảnh
                                             </div>
                                         )}
                                     </div>
