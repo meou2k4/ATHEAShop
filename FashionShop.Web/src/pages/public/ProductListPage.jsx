@@ -26,11 +26,11 @@ function VariantCard({ item }) {
                 <div className="vcard-price">
                     {hasDiscount ? (
                         <>
-                            <span className="vcard-price-sale">{displayPrice.toLocaleString('vi-VN')}</span>
-                            <span className="vcard-price-origin">{item.basePrice.toLocaleString('vi-VN')}</span>
+                            <span className="vcard-price-sale">{displayPrice.toLocaleString('vi-VN')}₫</span>
+                            <span className="vcard-price-origin">{item.basePrice.toLocaleString('vi-VN')}₫</span>
                         </>
                     ) : (
-                        <span className="vcard-price-normal">{displayPrice?.toLocaleString('vi-VN')}</span>
+                        <span className="vcard-price-normal">{displayPrice?.toLocaleString('vi-VN')}₫</span>
                     )}
                 </div>
                 <div className="vcard-name">{item.productName}</div>
