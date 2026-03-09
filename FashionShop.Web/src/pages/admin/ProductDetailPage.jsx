@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import { sortSizes } from '../../utils/sizeHelper';
 
-const API_BASE = 'https://www.athea.cloud';
+const API_BASE = 'http://localhost:7299';
 
 function DetailModal({ productId, colors, sizes, editColor, editImages, editVariants, onClose, onSaved }) {
     const isEdit = !!editColor;

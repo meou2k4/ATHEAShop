@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Strictly call the production server
 const api = axios.create({
-  baseURL: 'https://www.athea.cloud/api',
+  baseURL: 'http://localhost:7299/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
