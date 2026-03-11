@@ -109,9 +109,10 @@ export default function ContactPage() {
 
             {/* Google Map Section */}
             {settings['GoogleMapHtml'] && (
-                <div className="map-section">
-                    <div dangerouslySetInnerHTML={{ __html: settings['GoogleMapHtml'] }} />
-                </div>
+                <div 
+                    className="map-section" 
+                    dangerouslySetInnerHTML={{ __html: settings['GoogleMapHtml'] }} 
+                />
             )}
         </div>
     );

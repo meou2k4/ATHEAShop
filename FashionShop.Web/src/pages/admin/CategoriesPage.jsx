@@ -3,6 +3,7 @@ import api from '../../api/axiosConfig';
 
 export default function CategoriesPage() {
     const [categories, setCategories] = useState([]);
+    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -13,8 +14,12 @@ export default function CategoriesPage() {
 
     const fetchCategories = async () => {
         try {
-            const { data } = await api.get('/Category');
-            setCategories(data);
+            const [cRes, pRes] = await Promise.all([
+                api.get(`/Category?t=${Date.now()}`),
+                api.get(`/Product?t=${Date.now()}`)
+            ]);
+            setCategories(cRes.data);
+            setProducts(pRes.data);
         } catch { /* ignore */ } finally { setLoading(false); }
     };
 
@@ -45,6 +50,24 @@ export default function CategoriesPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        
+        // 1. Kiểm tra lặp tên hoặc slug
+        const isDuplicateName = categories.some(c => 
+            c.name.toLowerCase() === form.name.toLowerCase() && (!editing || c.id !== editing.id)
+        );
+        if (isDuplicateName) {
+            setError(`Tên danh mục "${form.name}" đã tồn tại.`);
+            return;
+        }
+
+        const isDuplicateSlug = categories.some(c => 
+            c.slug.toLowerCase() === form.slug.toLowerCase() && (!editing || c.id !== editing.id)
+        );
+        if (isDuplicateSlug) {
+            setError(`Slug "/${form.slug}" đã tồn tại cho một danh mục khác.`);
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             if (editing) {
@@ -67,10 +90,26 @@ export default function CategoriesPage() {
         if (!window.confirm(`Xóa danh mục "${name}"?`)) return;
         setIsSubmitting(true);
         try {
+            // Kiểm tra xem danh mục có chứa sản phẩm nào không
+            const { data: products } = await api.get('/Product'); // Lấy tất cả SP để check categoryId
+            const productCount = products.filter(p => p.categoryId === id).length;
+            
+            if (productCount > 0) {
+                alert(`Không thể xóa! Danh mục "${name}" đang chứa ${productCount} sản phẩm.\nVui lòng xóa hoặc di chuyển các sản phẩm này sang danh mục khác trước.`);
+                setIsSubmitting(false);
+                return;
+            }
+
             await api.delete(`/Category/${id}`);
+            // Optimistic UI: Gỡ khỏi state ngay lập tức
+            setCategories(prev => prev.filter(cat => cat.id !== id));
             fetchCategories();
-        } catch { alert('Không thể xóa danh mục này.'); }
-        finally { setIsSubmitting(false); }
+            alert(`Đã xóa danh mục "${name}" thành công.`);
+        } catch { 
+            alert('Không thể xóa danh mục này vào lúc này.'); 
+        } finally { 
+            setIsSubmitting(false); 
+        }
     };
 
     return (
@@ -83,17 +122,18 @@ export default function CategoriesPage() {
             <div className="card">
                 {loading ? <div className="loading">Đang tải...</div> : (
                     <div className="data-list-container">
-                        <div className="data-list-header grid-categories">
+                        <div className="data-list-header grid-categories-v2">
                             <div className="data-list-cell text-center">STT</div>
                             <div className="data-list-cell">TÊN DANH MỤC</div>
                             <div className="data-list-cell">SLUG</div>
+                            <div className="data-list-cell text-center">SẢN PHẨM</div>
                             <div className="data-list-cell text-center">THỨ TỰ</div>
                             <div className="data-list-cell text-center">THAO TÁC</div>
                         </div>
                         {categories.length === 0 ? (
                             <div className="text-center" style={{ padding: 40, color: 'var(--text-muted)' }}>Chưa có danh mục nào</div>
                         ) : categories.map((cat, i) => (
-                            <div key={cat.id} className="data-list-row grid-categories">
+                            <div key={cat.id} className="data-list-row grid-categories-v2">
                                 {/* Mobile Header - Premium Hero */}
                                 <div className="data-list-card-main">
                                     <div className="data-list-card-info">
@@ -110,6 +150,14 @@ export default function CategoriesPage() {
                                 <div className="data-list-cell desktop-only" data-label="Slug">
                                     <code style={{ fontSize: 11, background: 'var(--bg)', padding: '2px 6px', borderRadius: 4 }}>/{cat.slug}</code>
                                 </div>
+
+                                {/* Desktop PRODUCT COUNT */}
+                                <div className="data-list-cell desktop-only text-center" data-label="Sản phẩm">
+                                    <span className="badge badge-info" style={{ background: 'var(--admin-secondary-light)', color: 'var(--admin-secondary)', padding: '4px 10px', borderRadius: '6px', fontWeight: 600 }}>
+                                        {products.filter(p => p.categoryId === cat.id).length} SP
+                                    </span>
+                                </div>
+
 
                                 {/* Desktop ORDER */}
                                 <div className="data-list-cell desktop-only text-center" data-label="Thứ tự">
@@ -134,6 +182,22 @@ export default function CategoriesPage() {
                                 </div>
                             </div>
                         ))}
+                        {/* Summary Row */}
+                        <div className="data-list-row category-summary-row" style={{ 
+                            fontWeight: 700, 
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            padding: '18px 25px',
+                            color: 'var(--admin-primary)',
+                            fontSize: 15,
+                            borderRadius: '0 0 12px 12px'
+                        }}>
+                            <span>📊 TỔNG CỘNG HỆ THỐNG:</span>
+                            <div style={{ display: 'flex', gap: 20 }}>
+                                <span>📂 {categories.length} Danh mục</span>
+                                <span>👗 {products.length} Sản phẩm</span>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

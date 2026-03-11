@@ -5,7 +5,7 @@ import { sortSizes } from '../../utils/sizeHelper';
 
 const API_BASE = 'https://www.athea.cloud';
 
-function DetailModal({ productId, colors, sizes, editColor, editImages, editVariants, onClose, onSaved }) {
+function DetailModal({ productId, colors, sizes, editColor, editImages, editVariants, usedColorIds, onClose, onSaved }) {
     const isEdit = !!editColor;
 
     // --- State ảnh ---
@@ -147,6 +147,18 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
 
             const colorId = +selectedColor;
             
+            // 1. Kiểm tra trùng lặp màu (chỉ khi thêm mới màu cho sản phẩm)
+            if (!isEdit && usedColorIds.includes(colorId)) {
+                throw new Error('Màu sắc này đã được thiết lập cho sản phẩm này. Vui lòng chọn màu khác hoặc sửa màu hiện có.');
+            }
+
+            // 2. Kiểm tra trùng lặp kích thước trong cùng một màu
+            const selectedSizes = sizeRows.map(r => r.sizeId.toString());
+            const uniqueSizes = new Set(selectedSizes);
+            if (uniqueSizes.size !== selectedSizes.length) {
+                throw new Error('Phát hiện kích thước trùng lặp. Mỗi kích thước chỉ được xuất hiện một lần cho mỗi màu.');
+            }
+            
             // Xử lý từng ảnh một: Upload -> Lưu DB
             const currentImgItems = [...imgItems];
             for (let i = 0; i < currentImgItems.length; i++) {
@@ -200,6 +212,7 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
                 }
             }
             onSaved();
+            alert(isEdit ? 'Cập nhật sản phẩm chi tiết thành công!' : 'Thêm sản phẩm chi tiết thành công!');
             onClose();
         } catch (e) {
             setErr(e.response?.data?.message || e.message || 'Lỗi lưu dữ liệu.');
@@ -385,12 +398,36 @@ export default function ProductDetailPage() {
         setShowModal(true);
     };
 
+    const handleDeleteColorGroup = async (detail) => {
+        const colorName = detail.color.name;
+        if (!window.confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa TOÀN BỘ màu "${colorName}"?\n\nHành động này sẽ xóa vĩnh viễn:\n- Tất cả các kích thước (biến thể)\n- Tất cả hình ảnh liên quan\n\nBạn có muốn tiếp tục?`)) return;
+        
+        setIsSubmitting(true);
+        try {
+            // 1. Xóa tất cả biến thể
+            const deleteVariants = detail.variants.map(v => api.delete(`/Product/${id}/variants/${v.id}`));
+            // 2. Xóa tất cả hình ảnh
+            const deleteImages = detail.images.map(img => api.delete(`/Product/${id}/images/${img.id}`));
+            
+            await Promise.all([...deleteVariants, ...deleteImages]);
+            
+            fetchProduct();
+            alert(`Đã xóa thành công toàn bộ dữ liệu màu "${colorName}".`);
+        } catch (error) {
+            console.error('Delete color group error:', error);
+            alert('Có lỗi xảy ra khi xóa nhóm màu. Một số dữ liệu có thể chưa được xóa hết.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const handleDeleteVariant = async (variantId) => {
         if (!window.confirm('Xóa biến thể (size) này?')) return;
         setIsSubmitting(true);
         try {
             await api.delete(`/Product/${id}/variants/${variantId}`);
             fetchProduct();
+            alert('Đã xóa kích thước sản phẩm.');
         } catch { alert('Lỗi khi xoá'); }
         finally { setIsSubmitting(false); }
     };
@@ -442,9 +479,14 @@ export default function ProductDetailPage() {
                                                 <strong style={{ fontSize: 16 }}>{detail.color.name}</strong>
                                                 <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>• {detail.variants.length} SKU</span>
                                             </div>
-                                            <button className="btn btn-outline btn-sm" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => handleEdit(detail)}>
-                                                ✏️ Sửa / Ảnh
-                                            </button>
+                                            <div style={{ display: 'flex', gap: 6 }}>
+                                                <button className="btn btn-outline btn-sm" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => handleEdit(detail)}>
+                                                    ✏️ Sửa / Ảnh
+                                                </button>
+                                                <button className="btn btn-danger btn-sm" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => handleDeleteColorGroup(detail)} disabled={isSubmitting}>
+                                                    🗑️ Xóa Màu
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="sku-grid">
@@ -472,6 +514,7 @@ export default function ProductDetailPage() {
                 <DetailModal
                     productId={id} colors={colors} sizes={sizes}
                     editColor={editTarget?.color || null} editImages={editTarget?.images || []} editVariants={editTarget?.variants || []}
+                    usedColorIds={productDetails.map(d => d.color.id)}
                     onClose={() => { setShowModal(false); setEditTarget(null); }} onSaved={() => fetchProduct()}
                 />
             )}

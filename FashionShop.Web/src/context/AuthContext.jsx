@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -10,6 +10,18 @@ export function AuthProvider({ children }) {
         const saved = localStorage.getItem('user');
         return saved ? JSON.parse(saved) : null;
     });
+
+    // Lắng nghe sự kiện từ axios interceptor để đồng bộ token mới
+    useEffect(() => {
+        const handleTokenRefreshed = (event) => {
+            setToken(event.detail);
+        };
+
+        window.addEventListener('auth-token-refreshed', handleTokenRefreshed);
+        return () => {
+            window.removeEventListener('auth-token-refreshed', handleTokenRefreshed);
+        };
+    }, []);
 
     const login = (tokenValue, refreshTokenValue, userData) => {
         localStorage.setItem('token', tokenValue);
@@ -27,6 +39,7 @@ export function AuthProvider({ children }) {
         setToken(null);
         setRefreshToken(null);
         setUser(null);
+        window.location.href = '/admin/login'; // Đảm bảo về đúng trang login admin
     };
 
     return (

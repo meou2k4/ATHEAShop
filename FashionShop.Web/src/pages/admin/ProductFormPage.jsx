@@ -14,11 +14,13 @@ export default function ProductFormPage() {
 
     const [form, setForm] = useState(emptyForm);
     const [categories, setCategories] = useState([]);
+    const [allProducts, setAllProducts] = useState([]); // Thêm để check trùng
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         api.get('/Category').then(({ data }) => setCategories(data));
+        api.get('/Product').then(({ data }) => setAllProducts(data)); // Fetch để check trùng
         if (isEdit) {
             api.get(`/Product/${id}`).then(({ data }) => {
                 setForm({
@@ -35,6 +37,7 @@ export default function ProductFormPage() {
     const handleNameChange = (val) => {
         setForm(f => ({
             ...f, name: val,
+            // Chỉ tự động tạo slug nếu đang thêm mới và slug chưa bị can thiệp thủ công nhiều
             slug: !isEdit
                 ? val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')
                 : f.slug,
@@ -42,7 +45,25 @@ export default function ProductFormPage() {
     };
 
     const handleSave = async (e) => {
-        e.preventDefault(); setError(''); setSaving(true);
+        e.preventDefault(); 
+        setError(''); 
+        
+        // 1. Kiểm tra lặp tên hoặc slug trên client
+        const isDuplicateName = allProducts.some(p => 
+            p.name.toLowerCase() === form.name.toLowerCase() && (!isEdit || p.id !== +id)
+        );
+        if (isDuplicateName) {
+            setError(`Tên sản phẩm "${form.name}" đã tồn tại.`); return;
+        }
+
+        const isDuplicateSlug = allProducts.some(p => 
+            p.slug.toLowerCase() === form.slug.toLowerCase() && (!isEdit || p.id !== +id)
+        );
+        if (isDuplicateSlug) {
+            setError(`Slug "${form.slug}" đã tồn tại cho một sản phẩm khác.`); return;
+        }
+
+        setSaving(true);
         try {
             const payload = {
                 ...form,
@@ -52,14 +73,18 @@ export default function ProductFormPage() {
             };
             if (isEdit) {
                 await api.put(`/Product/${id}`, payload);
+                alert('Cập nhật sản phẩm thành công!');
                 navigate('/admin/products');
             } else {
                 const { data } = await api.post('/Product', payload);
-
+                alert('Thêm sản phẩm thành công!');
                 navigate(`/admin/products/${data.id}/detail`);
             }
-        } catch (err) { setError(err.response?.data?.message || 'Có lỗi xảy ra.'); }
-        finally { setSaving(false); }
+        } catch (err) { 
+            setError(err.response?.data?.message || 'Lỗi server khi lưu sản phẩm.'); 
+        } finally { 
+            setSaving(false); 
+        }
     };
 
     return (

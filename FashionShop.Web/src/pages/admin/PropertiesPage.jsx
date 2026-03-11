@@ -30,6 +30,15 @@ export default function PropertiesPage() {
         e.preventDefault();
         setColorError('');
         setColorSuccess('');
+        
+        // Kiểm tra trùng lặp local
+        if (colors.some(c => c.name.toLowerCase() === colorForm.name.toLowerCase())) {
+            setColorError(`Tên màu "${colorForm.name}" đã tồn tại.`); return;
+        }
+        if (colors.some(c => c.hex.toLowerCase() === colorForm.hex.toLowerCase())) {
+            setColorError(`Mã màu HEX "${colorForm.hex}" đã tồn tại.`); return;
+        }
+
         setIsSubmitting(true);
         try {
             await api.post('/Color', colorForm);
@@ -48,6 +57,12 @@ export default function PropertiesPage() {
         e.preventDefault();
         setSizeError('');
         setSizeSuccess('');
+
+        // Kiểm tra trùng lặp local
+        if (sizes.some(s => s.name.toLowerCase() === sizeForm.name.toLowerCase())) {
+            setSizeError(`Kích thước "${sizeForm.name}" đã tồn tại.`); return;
+        }
+
         setIsSubmitting(true);
         try {
             await api.post('/Size', sizeForm);
@@ -66,12 +81,25 @@ export default function PropertiesPage() {
         if (!window.confirm(`Bạn có chắc muốn xoá màu "${name}"?`)) return;
         setIsSubmitting(true);
         try {
+            // Kiểm tra xem có sản phẩm nào đang dùng màu này không
+            const { data: variants } = await api.get('/Product/variants-list'); // Giả sử có endpoint liệt kê variants
+            const inUse = variants.filter(v => v.colorId === id);
+            
+            if (inUse.length > 0) {
+                const productNames = [...new Set(inUse.map(v => v.productName))].join(', ');
+                alert(`Không thể xóa! Màu "${name}" đang được sử dụng ở các sản phẩm: ${productNames}.\nVui lòng gỡ màu này khỏi các sản phẩm đó trước.`);
+                setIsSubmitting(false);
+                return;
+            }
+
             await api.delete(`/Color/${id}`);
+            // Optimistic UI
+            setColors(prev => prev.filter(c => c.id !== id));
             setColorSuccess(`Đã xoá màu "${name}" thành công!`);
             fetchAll();
             setTimeout(() => setColorSuccess(''), 3000);
         } catch (err) {
-            setColorError(err.response?.data?.message || 'Lỗi khi xoá màu. Có thể màu này đang được sử dụng ở đâu đó.');
+            setColorError(err.response?.data?.message || 'Lỗi khi xoá màu.');
             setTimeout(() => setColorError(''), 5000);
         } finally {
             setIsSubmitting(false);
@@ -82,12 +110,25 @@ export default function PropertiesPage() {
         if (!window.confirm(`Bạn có chắc muốn xoá kích thước "${name}"?`)) return;
         setIsSubmitting(true);
         try {
+            // Kiểm tra xem có sản phẩm nào đang dùng size này không
+            const { data: variants } = await api.get('/Product/variants-list');
+            const inUse = variants.filter(v => v.sizeId === id);
+
+            if (inUse.length > 0) {
+                const productNames = [...new Set(inUse.map(v => v.productName))].join(', ');
+                alert(`Không thể xóa! Kích thước "${name}" đang được sử dụng ở các sản phẩm: ${productNames}.\nVui lòng gỡ kích thước này khỏi các sản phẩm đó trước.`);
+                setIsSubmitting(false);
+                return;
+            }
+
             await api.delete(`/Size/${id}`);
+            // Optimistic UI
+            setSizes(prev => prev.filter(s => s.id !== id));
             setSizeSuccess(`Đã xoá kích thước "${name}" thành công!`);
             fetchAll();
             setTimeout(() => setSizeSuccess(''), 3000);
         } catch (err) {
-            setSizeError(err.response?.data?.message || 'Lỗi khi xoá kích thước. Có thể kích thước này đang được sử dụng.');
+            setSizeError(err.response?.data?.message || 'Lỗi khi xoá kích thước.');
             setTimeout(() => setSizeError(''), 5000);
         } finally {
             setIsSubmitting(false);

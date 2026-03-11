@@ -62,6 +62,9 @@ export default function ProductListPage() {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showSort, setShowSort] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 20;
+
     const sortRef = useRef();
 
     useEffect(() => {
@@ -69,13 +72,17 @@ export default function ProductListPage() {
     }, []);
 
     useEffect(() => {
+        setLoading(true);
         let params = new URLSearchParams();
         if (categoryId) params.set('categoryId', categoryId);
         if (filter === 'new') params.set('isNew', 'true');
         if (filter === 'sale') params.set('isOnSale', 'true');
 
         api.get(`/Product/variants-list?${params}`)
-            .then(({ data }) => setAllItems(Array.isArray(data) ? data : []))
+            .then(({ data }) => {
+                setAllItems(Array.isArray(data) ? data : []);
+                setCurrentPage(1); // Reset về trang 1 khi load data mới
+            })
             .catch(() => setAllItems([]))
             .finally(() => setLoading(false));
     }, [filter, categoryId]);
@@ -87,18 +94,24 @@ export default function ProductListPage() {
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    const items = useMemo(() => {
+    const sortedItems = useMemo(() => {
         const list = [...allItems];
-        if (sort === 'price-asc') return list.sort((a, b) => (a.salePrice || a.basePrice) - (b.salePrice || b.basePrice));
-        if (sort === 'price-desc') return list.sort((a, b) => (b.salePrice || b.basePrice) - (a.salePrice || a.basePrice));
-        if (sort === 'name-asc') return list.sort((a, b) => a.productName.localeCompare(b.productName, 'vi'));
+        if (sort === 'price-asc') list.sort((a, b) => (a.salePrice || a.basePrice) - (b.salePrice || b.basePrice));
+        else if (sort === 'price-desc') list.sort((a, b) => (b.salePrice || b.basePrice) - (a.salePrice || a.basePrice));
+        else if (sort === 'name-asc') list.sort((a, b) => a.productName.localeCompare(b.productName, 'vi'));
         return list;
     }, [allItems, sort]);
+
+    // Logic Phân trang
+    const totalItems = sortedItems.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const paginatedItems = sortedItems.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     const setParam = (key, value) => {
         const next = new URLSearchParams(searchParams);
         if (value) next.set(key, value); else next.delete(key);
         setSearchParams(next);
+        setCurrentPage(1); // Reset về trang 1 khi đổi sắp xếp
     };
 
     const activeCategory = categories.find(c => String(c.id) === categoryId);
@@ -124,12 +137,18 @@ export default function ProductListPage() {
         } else {
             setSearchParams({ filter: id });
         }
+        setCurrentPage(1);
     };
 
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     // Close on location change
     useEffect(() => { setIsFilterOpen(false); }, [filter, categoryId]);
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     return (
         <div className="plp-wrapper">
@@ -178,7 +197,7 @@ export default function ProductListPage() {
                 <header className="plp-toolbar">
                     <div className="plp-toolbar-left">
                         <h1 className="plp-toolbar-name">
-                            {pageTitle} <span className="plp-toolbar-count">({items.length} sản phẩm)</span>
+                            {pageTitle} <span className="plp-toolbar-count">({totalItems} sản phẩm)</span>
                         </h1>
                     </div>
 
@@ -210,7 +229,7 @@ export default function ProductListPage() {
                 {
                     loading ? (
                         <div className="loading" style={{ paddingTop: 80 }}>⏳ Đang tải...</div>
-                    ) : items.length === 0 ? (
+                    ) : totalItems === 0 ? (
                         <div className="empty-state" style={{ paddingTop: 80 }}>
                             <div className="empty-icon">📂</div>
                             <p>Không có sản phẩm nào</p>
@@ -220,9 +239,53 @@ export default function ProductListPage() {
                             </button>
                         </div>
                     ) : (
-                        <div className="vcard-grid">
-                            {items.map((item, i) => <VariantCard key={`${item.productId}-${item.colorId ?? i}`} item={item} />)}
-                        </div>
+                        <>
+                            <div className="vcard-grid">
+                                {paginatedItems.map((item, i) => <VariantCard key={`${item.productId}-${item.colorId ?? i}`} item={item} />)}
+                            </div>
+
+                            {/* Pagination UI */}
+                            {totalPages > 1 && (
+                                <div className="pagination-athea">
+                                    <button 
+                                        className="page-btn" 
+                                        disabled={currentPage === 1}
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                    >
+                                        ❮
+                                    </button>
+                                    
+                                    {[...Array(totalPages)].map((_, i) => {
+                                        const pageNum = i + 1;
+                                        // Chỉ hiển thị tối đa 5 trang xung quanh trang hiện tại nếu quá nhiều trang
+                                        if (totalPages > 7) {
+                                            if (pageNum !== 1 && pageNum !== totalPages && (pageNum < currentPage - 1 || pageNum > currentPage + 1)) {
+                                                if (pageNum === currentPage - 2 || pageNum === currentPage + 2) return <span key={pageNum}>...</span>;
+                                                return null;
+                                            }
+                                        }
+
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                className={`page-btn ${currentPage === pageNum ? 'active' : ''}`}
+                                                onClick={() => handlePageChange(pageNum)}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
+
+                                    <button 
+                                        className="page-btn" 
+                                        disabled={currentPage === totalPages}
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                    >
+                                        ❯
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )
                 }
             </main >

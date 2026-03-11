@@ -657,6 +657,10 @@ a {
   grid-template-columns: 60px 2fr 2fr 100px 150px;
 }
 
+.grid-categories-v2 {
+  grid-template-columns: 60px 1.5fr 1fr 100px 100px 180px;
+}
+
 /* Hide mobile-specific hero part on desktop */
 .data-list-card-main,
 .mobile-only {
@@ -1395,7 +1399,13 @@ a {
   --pub-bg: #faf9f7;
   --pub-surface: #ffffff;
   --pub-border: #e8e2d9;
-  --container: 1200px;
+  --container: 1210px;
+}
+
+@media (min-width: 1400px) {
+  :root {
+    --container: 95%;
+  }
 }
 
 /* ============================================
@@ -1957,6 +1967,7 @@ a {
   gap: 12px;
   overflow-x: auto;
   padding-bottom: 8px;
+  justify-content: center;
   /* Prevent scrollbar overlap */
   scrollbar-width: none;
   /* Firefox */
@@ -2071,7 +2082,7 @@ a {
   grid-template-columns: 220px 1fr;
   gap: 0;
   min-height: 60vh;
-  max-width: 1400px;
+  max-width: var(--container);
   margin: 0 auto;
   padding: 40px 24px;
 }
@@ -2269,13 +2280,23 @@ a {
 .plp-wrapper {
   max-width: var(--container);
   margin: 0 auto;
-  padding: 40px 15px;
+  padding: 40px 24px;
   display: grid;
   grid-template-columns: 240px 1fr;
   gap: 40px;
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+}
+
+@media (min-width: 1400px) {
+  .plp-wrapper,
+  .container,
+  .pub-header-inner,
+  .footer-athea-grid {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
 }
 
 .plp-sidebar {
@@ -2443,7 +2464,7 @@ a {
 .vcard-price-normal {
   font-size: 14px;
   font-weight: 600;
-  color: var(--pub-text);
+  color: #c8956c;
 }
 
 .vcard-price-sale {
@@ -2454,7 +2475,7 @@ a {
 
 .vcard-price-origin {
   font-size: 12px;
-  color: var(--pub-muted);
+  color: var(--danger);
   text-decoration: line-through;
 }
 
@@ -2856,19 +2877,19 @@ a {
 .product-price-sale {
   font-size: 20px;
   font-weight: 700;
-  color: var(--danger);
+  color: #c8956c;
 }
 
 .product-price-origin {
   font-size: 14px;
-  color: var(--pub-muted);
+  color: var(--danger);
   text-decoration: line-through;
 }
 
 .product-price-normal {
   font-size: 20px;
   font-weight: 700;
-  color: var(--pub-text);
+  color: #c8956c;
 }
 
 /* Color selector */
@@ -3401,16 +3422,19 @@ a {
 .map-section {
   margin-top: 60px;
   width: 100%;
-  height: 400px;
+  height: 450px;
   background-color: #f5f5f5;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
-.map-section iframe {
+.map-section iframe,
+.map-section div {
   width: 100% !important;
   height: 100% !important;
-  border: none;
+  border: none !important;
+  display: block;
 }
 
 /* Responsive */
@@ -4422,6 +4446,7 @@ a {
   .category-scroll-container {
     gap: 8px;
     padding-bottom: 12px;
+    justify-content: flex-start !important;
   }
 
   .category-pill {
@@ -4646,3 +4671,178 @@ a {
     padding: 0 12px;
   }
 }
+
+/* ── Refinements for Large Screens (> 1400px) ── */
+@media (min-width: 1401px) {
+  .hero-athea-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 100px;
+  }
+
+  .hero-athea h1 {
+    font-size: 72px !important;
+  }
+
+  .hero-athea p {
+    font-size: 18px !important;
+    max-width: 600px !important;
+  }
+
+  .section-title {
+    font-size: 32px !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  .hero-athea-badge {
+    font-size: 13px !important;
+    letter-spacing: 0.2em !important;
+    margin-bottom: 28px !important;
+  }
+
+  .hero-athea h1 {
+    font-size: 72px !important;
+    margin-bottom: 32px !important;
+  }
+
+  .hero-athea p {
+    font-size: 18px !important;
+    max-width: 580px !important;
+    margin-bottom: 48px !important;
+  }
+
+  .section {
+    padding: 80px 0 !important;
+  }
+
+  .category-pill {
+    padding: 12px 32px !important;
+  }
+
+  .category-pill-name {
+    font-size: 14px !important;
+  }
+}
+
+/* ── Tinh chỉnh Chi tiết sản phẩm cho màn hình lớn (> 1400px) ── */
+@media (min-width: 1401px) {
+  .product-detail-grid {
+    max-width: 1300px !important;
+    margin: 0 auto !important;
+    gap: 100px !important;
+    grid-template-columns: 1.15fr 1fr !important;
+  }
+
+  .product-info h1 {
+    font-size: 32px !important;
+    margin-bottom: 16px !important;
+    line-height: 1.2 !important;
+  }
+
+  .product-sku {
+    font-size: 13px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .product-info-price {
+    margin-bottom: 40px !important;
+  }
+
+  .product-price-sale, 
+  .product-price-normal {
+    font-size: 32px !important;
+  }
+
+  .product-price-origin {
+    font-size: 18px !important;
+  }
+
+  /* Kích thước các nút chọn */
+  .color-circle-item {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .size-box {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 15px !important;
+  }
+
+  /* Sản phẩm liên quan */
+  .related-section .container {
+    max-width: 1300px !important;
+    margin: 0 auto !important;
+  }
+
+  .related-section .section-title {
+    font-size: 14px !important; /* Giữ tiêu đề nhỏ tinh tế cho phần liên quan */
+  }
+
+  .pdp-breadcrumb {
+    max-width: 1300px !important;
+    margin: 0 auto 24px auto !important;
+    padding: 0 !important;
+  }
+}
+
+/* Mặc định ẩn bản trong PC */
+.breadcrumb-athea-inside {
+  display: none;
+}
+
+/* Pagination Athea */
+.pagination-athea {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 60px;
+  margin-bottom: 40px;
+}
+
+.page-btn {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--pub-border);
+  background: white;
+  color: var(--pub-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: #c8956c;
+  color: #c8956c;
+}
+
+.page-btn.active {
+  background: #c8956c;
+  border-color: #c8956c;
+  color: white;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .pagination-athea {
+    margin-top: 40px;
+    gap: 4px;
+  }
+  
+  .page-btn {
+    min-width: 36px;
+    height: 36px;
+    font-size: 13px;
+    padding: 0 8px;
+  }
+}

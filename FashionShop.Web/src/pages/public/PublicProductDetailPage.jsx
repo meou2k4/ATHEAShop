@@ -16,7 +16,7 @@ export default function ProductDetailPage() {
     const [activeImg, setActiveImg] = useState(null);
     const [selectedColor, setSelectedColor] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
-    const [openAccordion, setOpenAccordion] = useState('details'); // details, storage
+    const [openAccordions, setOpenAccordions] = useState({ details: true, storage: true });
 
     // Zoom Modal State
     const [zoomImg, setZoomImg] = useState(null);
@@ -42,10 +42,11 @@ export default function ProductDetailPage() {
             api.get(`/Product/by-slug/${slug}`),
             api.get('/Settings').catch(() => ({ data: [] })),
         ]).then(([p, s]) => {
-            setProduct(p.data);
+            const productData = p.data;
+            setProduct(productData);
 
             const initColorId = searchParams.get('color') ? Number(searchParams.get('color')) : null;
-            const validColors = [...new Set((p.data.variants || []).map(v => v.colorId).filter(Boolean))];
+            const validColors = [...new Set((productData.variants || []).map(v => v.colorId).filter(Boolean))];
 
             let targetColor = initColorId && validColors.includes(initColorId) ? initColorId : null;
             if (!targetColor && validColors.length > 0) {
@@ -55,13 +56,13 @@ export default function ProductDetailPage() {
             setSelectedColor(targetColor);
             setSelectedSize(null);
 
-            const colorImages = targetColor ? (p.data.images || []).filter(i => i.colorId === targetColor) : (p.data.images || []);
+            const colorImages = targetColor ? (productData.images || []).filter(i => i.colorId === targetColor) : (productData.images || []);
             
             // Tìm ảnh chính: Ưu tiên ảnh chính của màu đã chọn -> Ảnh đầu tiên của màu -> Ảnh chính toàn cục -> Ảnh đầu tiên toàn cục
             const mainImg = colorImages.find(i => i.isMain) 
                 || colorImages[0] 
-                || (p.data.images || []).find(i => i.isMain) 
-                || p.data.images?.[0] 
+                || (productData.images || []).find(i => i.isMain) 
+                || productData.images?.[0] 
                 || null;
 
             setActiveImg(mainImg);
@@ -71,14 +72,14 @@ export default function ProductDetailPage() {
             setSettings(map);
 
             // Sản phẩm cùng danh mục
-            if (p.data.categoryId) {
-                api.get(`/Product/variants-list?categoryId=${p.data.categoryId}`)
+            if (productData.categoryId) {
+                api.get(`/Product/variants-list?categoryId=${productData.categoryId}`)
                     .then(({ data }) => {
                         const items = Array.isArray(data) ? data : [];
-                        // Lấy 1 màu đại diện cho mỗi sản phẩm, loại trừ sp hiện tại
+                        // Lấy đại diện mỗi sản phẩm, giữ thông tin biến thể màu đầu tiên
                         const seen = new Set();
                         const unique = items.filter(i => {
-                            if (i.productId === p.data.id) return false;
+                            if (i.productId === productData.id) return false;
                             if (seen.has(i.productId)) return false;
                             seen.add(i.productId);
                             return true;
@@ -92,6 +93,13 @@ export default function ProductDetailPage() {
 
     if (loading) return <div className="loading" style={{ paddingTop: 100 }}>⏳ Đang tải...</div>;
     if (!product) return null;
+
+    const toggleAccordion = (key) => {
+        setOpenAccordions(prev => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
+    };
 
     // Danh sách màu (duy nhất) từ variants
     const colors = [...new Map(
@@ -132,18 +140,21 @@ export default function ProductDetailPage() {
         : null;
     const fbUrl = settings['Facebook'] || null;
 
+    // Sửa lỗi categorySlug bị undefined: Nếu không có slug nhưng có categoryId, ta cần Link an toàn
+    const categoryPath = product.categorySlug ? `/danh-muc/${product.categorySlug}` : `/san-pham?categoryId=${product.categoryId}`;
+
     return (
         <>
             <div className="product-detail">
                 <div className="container">
                     {/* Breadcrumb */}
-                    <div className="breadcrumb">
+                    <div className="breadcrumb pdp-breadcrumb">
                         <Link to="/">Trang chủ</Link>
                         <span className="breadcrumb-sep">/</span>
                         <Link to="/san-pham">Sản phẩm</Link>
                         {product.categoryName && <>
                             <span className="breadcrumb-sep">/</span>
-                            <Link to={`/danh-muc/${product.categorySlug}`}>{product.categoryName}</Link>
+                            <Link to={categoryPath}>{product.categoryName}</Link>
                         </>}
                         <span className="breadcrumb-sep">/</span>
                         <span style={{ color: 'var(--pub-text)', fontWeight: 500 }}>{product.name}</span>
@@ -284,10 +295,10 @@ export default function ProductDetailPage() {
                             {/* Accordion Chi tiết & Lưu ý & Đổi trả */}
                             <div className="accordion-athea">
                                 <div className="acc-athea-item">
-                                    <button className="acc-athea-header" onClick={() => setOpenAccordion(openAccordion === 'details' ? null : 'details')}>
-                                        CHI TIẾT <span className="acc-athea-icon">{openAccordion === 'details' ? '-' : '+'}</span>
+                                    <button className="acc-athea-header" onClick={() => toggleAccordion('details')}>
+                                        CHI TIẾT <span className="acc-athea-icon">{openAccordions.details ? '-' : '+'}</span>
                                     </button>
-                                    {openAccordion === 'details' && (
+                                    {openAccordions.details && (
                                         <div className="acc-athea-body">
                                             {product.description ? <div dangerouslySetInnerHTML={{ __html: product.description.replace(/\n/g, '<br/>') }} /> : <p>Chưa có mô tả.</p>}
 
@@ -295,10 +306,10 @@ export default function ProductDetailPage() {
                                     )}
                                 </div>
                                 <div className="acc-athea-item">
-                                    <button className="acc-athea-header" onClick={() => setOpenAccordion(openAccordion === 'storage' ? null : 'storage')}>
-                                        HƯỚNG DẪN BẢO QUẢN <span className="acc-athea-icon">{openAccordion === 'storage' ? '-' : '+'}</span>
+                                    <button className="acc-athea-header" onClick={() => toggleAccordion('storage')}>
+                                        HƯỚNG DẪN BẢO QUẢN <span className="acc-athea-icon">{openAccordions.storage ? '-' : '+'}</span>
                                     </button>
-                                    {openAccordion === 'storage' && (
+                                    {openAccordions.storage && (
                                         <div className="acc-athea-body">
                                             {product.storageInstructions ? <div dangerouslySetInnerHTML={{ __html: product.storageInstructions.replace(/\n/g, '<br/>') }} /> : <p>Chưa có hướng dẫn bảo quản.</p>}
                                         </div>
@@ -327,7 +338,7 @@ export default function ProductDetailPage() {
                                     const displayPrice = p.isOnSale && p.salePrice ? p.salePrice : p.basePrice;
 
                                     return (
-                                        <div key={p.productId} className="vcard vcard-related" onClick={() => navigate(`/san-pham/${p.slug}`)}>
+                                        <div key={p.productId} className="vcard vcard-related" onClick={() => navigate(`/san-pham/${p.slug}${p.colorId ? `?color=${p.colorId}` : ''}`)}>
                                             <div className="vcard-img">
                                                 {p.mainImageUrl
                                                     ? <img src={p.mainImageUrl} alt={p.productName} loading="lazy" />
@@ -350,6 +361,11 @@ export default function ProductDetailPage() {
                                                     )}
                                                 </div>
                                                 <div className="vcard-name">{p.productName}</div>
+                                                {p.colorHex && (
+                                                    <div className="vcard-color-dot">
+                                                        <span style={{ background: p.colorHex }} title={p.colorName} />
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
