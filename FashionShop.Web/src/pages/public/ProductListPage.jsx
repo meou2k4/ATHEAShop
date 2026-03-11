@@ -56,6 +56,7 @@ export default function ProductListPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = searchParams.get('filter');        // 'new' | 'sale' | null
     const categoryId = searchParams.get('categoryId');
+    const searchQuery = searchParams.get('search');
     const sort = searchParams.get('sort') || 'default';
 
     const [allItems, setAllItems] = useState([]);
@@ -80,12 +81,32 @@ export default function ProductListPage() {
 
         api.get(`/Product/variants-list?${params}`)
             .then(({ data }) => {
-                setAllItems(Array.isArray(data) ? data : []);
+                let list = Array.isArray(data) ? data : [];
+                
+                // Search Logic
+                if (searchQuery) {
+                    const q = searchQuery.toLowerCase().trim();
+                    
+                    // 1. Kiểm tra Slug khớp chuẩn trước
+                    const slugMatch = list.filter(item => item.slug && item.slug.toLowerCase() === q);
+                    
+                    if (slugMatch.length > 0) {
+                        list = slugMatch;
+                    } else {
+                        // 2. Nếu không khớp slug chuẩn, tìm theo tên liên quan
+                        list = list.filter(item => 
+                            item.productName.toLowerCase().includes(q) ||
+                            (item.categoryName && item.categoryName.toLowerCase().includes(q))
+                        );
+                    }
+                }
+
+                setAllItems(list);
                 setCurrentPage(1); // Reset về trang 1 khi load data mới
             })
             .catch(() => setAllItems([]))
             .finally(() => setLoading(false));
-    }, [filter, categoryId]);
+    }, [filter, categoryId, searchQuery]);
 
     // Close sort dropdown on outside click
     useEffect(() => {
@@ -115,8 +136,12 @@ export default function ProductListPage() {
     };
 
     const activeCategory = categories.find(c => String(c.id) === categoryId);
-    const pageTitle = activeCategory?.name
+    let pageTitle = activeCategory?.name
         ?? (filter === 'new' ? 'Sản phẩm mới' : filter === 'sale' ? 'Sản phẩm giảm giá' : 'Tất cả sản phẩm');
+    
+    if (searchQuery) {
+        pageTitle = `Kết quả tìm kiếm cho: "${searchQuery}"`;
+    }
     const sortLabel = SORT_OPTIONS.find(o => o.value === sort)?.label || 'Sắp xếp';
 
     const FILTERS = [
@@ -126,9 +151,9 @@ export default function ProductListPage() {
     ];
     const currentFilter = filter || 'all';
     const expanded = {
-        all: currentFilter === 'all',
-        new: currentFilter === 'new',
-        sale: currentFilter === 'sale'
+        all: !searchQuery && currentFilter === 'all',
+        new: !searchQuery && currentFilter === 'new',
+        sale: !searchQuery && currentFilter === 'sale'
     };
 
     const handleHeaderClick = (id) => {
