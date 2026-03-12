@@ -135,66 +135,66 @@ export default function PublicHeader() {
                             <Link to="/san-pham?filter=new" className={navClass(isProductPage && filter === 'new')}>Mới</Link>
                             <Link to="/san-pham?filter=sale" className={navClass(isProductPage && filter === 'sale')}>Sale</Link>
                         </nav>
+                    </div>
 
-                        <div className="pub-search-wrapper" ref={searchRef}>
-                            <form onSubmit={handleSearchSubmit} className="pub-search-form">
-                                <input
-                                    type="text"
-                                    className="pub-search-input"
-                                    placeholder="Tìm sản phẩm..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
-                                    onKeyDown={handleKeyDown}
-                                />
-                                <button type="submit" className="pub-search-btn">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
-                                    </svg>
-                                </button>
-                            </form>
+                    <div className="pub-search-wrapper" ref={searchRef}>
+                        <form onSubmit={handleSearchSubmit} className="pub-search-form">
+                            <input
+                                type="text"
+                                className="pub-search-input"
+                                placeholder="Tìm sản phẩm..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
+                                onKeyDown={handleKeyDown}
+                            />
+                            <button type="submit" className="pub-search-btn">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+                                </svg>
+                            </button>
+                        </form>
 
-                            {showSuggestions && (
-                                <div className="pub-search-dropdown">
-                                    {isSearching ? (
-                                        <div className="search-loading">Đang tìm...</div>
-                                    ) : suggestions.length > 0 ? (
-                                        <div className="search-results">
-                                            {suggestions.map((p, index) => (
-                                                <div
-                                                    key={p.productId}
-                                                    className={`search-item ${index === selectedIndex ? 'selected' : ''}`}
-                                                    onClick={() => navigate(`/san-pham/${p.slug}${p.colorId ? `?color=${p.colorId}` : ''}`)}
-                                                >
-                                                    <div className="search-item-img">
-                                                        <img src={p.mainImageUrl} alt="" />
-                                                    </div>
-                                                    <div className="search-item-info">
-                                                        <div className="search-item-name">{p.productName}</div>
-                                                        <div className="search-item-price">
-                                                            {p.isOnSale && p.salePrice ? (
-                                                                <>
-                                                                    <span className="sale">{p.salePrice.toLocaleString('vi-VN')}₫</span>
-                                                                    <span className="old">{p.basePrice.toLocaleString('vi-VN')}₫</span>
-                                                                </>
-                                                            ) : (
-                                                                <span>{p.basePrice.toLocaleString('vi-VN')}₫</span>
-                                                            )}
-                                                        </div>
+                        {showSuggestions && (
+                            <div className="pub-search-dropdown">
+                                {isSearching ? (
+                                    <div className="search-loading">Đang tìm...</div>
+                                ) : suggestions.length > 0 ? (
+                                    <div className="search-results">
+                                        {suggestions.map((p, index) => (
+                                            <div
+                                                key={p.productId}
+                                                className={`search-item ${index === selectedIndex ? 'selected' : ''}`}
+                                                onClick={() => navigate(`/san-pham/${p.slug}${p.colorId ? `?color=${p.colorId}` : ''}`)}
+                                            >
+                                                <div className="search-item-img">
+                                                    <img src={p.mainImageUrl} alt="" />
+                                                </div>
+                                                <div className="search-item-info">
+                                                    <div className="search-item-name">{p.productName}</div>
+                                                    <div className="search-item-price">
+                                                        {p.isOnSale && p.salePrice ? (
+                                                            <>
+                                                                <span className="sale">{p.salePrice.toLocaleString('vi-VN')}₫</span>
+                                                                <span className="old">{p.basePrice.toLocaleString('vi-VN')}₫</span>
+                                                            </>
+                                                        ) : (
+                                                            <span>{p.basePrice.toLocaleString('vi-VN')}₫</span>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            ))}
-                                            <div className="search-view-all" onClick={handleSearchSubmit}>
-                                                Xem tất cả kết quả cho "{searchQuery}"
                                             </div>
+                                        ))}
+                                        <div className="search-view-all" onClick={handleSearchSubmit}>
+                                            Xem tất cả kết quả cho "{searchQuery}"
                                         </div>
-                                    ) : searchQuery.length >= 2 && (
-                                        <div className="search-no-results">Không tìm thấy sản phẩm nào</div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                                    </div>
+                                ) : searchQuery.length >= 2 && (
+                                    <div className="search-no-results">Không tìm thấy sản phẩm nào</div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div className="pub-header-right">

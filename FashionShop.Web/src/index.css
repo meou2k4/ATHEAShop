@@ -63,7 +63,6 @@ a {
 }
 
 html {
-  overflow-x: hidden;
   width: 100%;
 }
 
@@ -75,7 +74,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
   width: 100%;
   max-width: 100%;
   position: relative;
@@ -1389,7 +1387,7 @@ a {
    ============================================ */
 
 :root {
-  --pub-header-h: 64px;
+  --pub-header-h: 90px;
   --pub-accent: #c8956c;
   /* Vàng nâu nghiêng thời trang */
   --pub-accent-dark: #a8724a;
@@ -1439,24 +1437,39 @@ a {
   justify-content: space-between;
   width: 100%;
   box-sizing: border-box;
+  gap: 20px;
+}
+
+.pub-header-left {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  order: 1;
 }
 
 .pub-header-center {
   display: flex;
   align-items: center;
-  gap: 20px;
-  flex: 0 1 auto;
+  gap: 40px;
+  flex: 1;
   justify-content: center;
+  order: 2;
 }
 
-.pub-header-left, .pub-header-right {
-  flex: 1;
+.pub-search-wrapper {
+  position: relative;
+  width: 260px;
   display: flex;
   align-items: center;
+  order: 3;
 }
 
 .pub-header-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
+  order: 4;
 }
 
 /* Logo */
@@ -1469,7 +1482,7 @@ a {
 }
 
 .pub-logo img {
-  max-height: 53px;
+  max-height: 75px;
   width: auto;
   display: block;
   object-fit: contain;
@@ -1480,19 +1493,21 @@ a {
 .pub-nav-desktop {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 30px;
+  width: 100%;
+  justify-content: center;
 }
 
 .pub-nav-link {
-  padding: 6px 10px;
-  border-radius: 20px;
-  font-size: 11.5px;
+  padding: 8px 20px;
+  border-radius: 24px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--pub-text);
-  transition: background .2s, color .2s;
+  transition: all 0.3s ease;
   white-space: nowrap;
   text-decoration: none;
-  letter-spacing: .02em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
@@ -1508,13 +1523,8 @@ a {
   justify-content: flex-end;
 }
 
-/* Search Wrapper */
-.pub-search-wrapper {
-  position: relative;
-  width: 200px;
-  display: flex;
-  align-items: center;
-}
+/* Search Wrapper (Desktop) */
+/* (Styles moved up to .pub-search-wrapper in header-inner section) */
 
 .pub-search-dropdown {
   left: 50%;
@@ -1531,12 +1541,11 @@ a {
   display: flex;
   align-items: center;
   background: rgba(0, 0, 0, 0.04);
-  border-radius: 20px;
-  padding: 4px 12px;
+  border-radius: 25px;
+  padding: 6px 16px;
   transition: all 0.3s ease;
   border: 1px solid transparent;
   width: 100%;
-  max-width: 400px;
 }
 
 .pub-search-form:focus-within {
@@ -1572,12 +1581,11 @@ a {
   color: var(--pub-accent);
 }
 
-/* Search Dropdown */
 .pub-search-dropdown {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  width: 380px;
+  width: 450px;
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
@@ -2011,7 +2019,6 @@ a {
   min-height: 100vh;
   background: var(--pub-bg);
   width: 100%;
-  overflow-x: hidden;
   position: relative;
 }
 
@@ -2532,7 +2539,6 @@ a {
   gap: 40px;
   width: 100%;
   box-sizing: border-box;
-  overflow-x: hidden;
 }
 
 @media (min-width: 1400px) {
@@ -2546,14 +2552,19 @@ a {
 }
 
 .plp-sidebar {
+  position: sticky;
+  top: calc(var(--pub-header-h) + 40px);
+  height: fit-content;
+  align-self: start;
   border-right: 1px solid var(--pub-border);
-  padding-right: 20px;
+  padding-right: 32px;
+  z-index: 10;
 }
 
 .plp-sidebar-section {
-  border-bottom: 1px solid var(--pub-border);
-  padding-bottom: 15px;
-  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .plp-sidebar-header {
@@ -2563,12 +2574,18 @@ a {
   width: 100%;
   background: none;
   border: none;
-  padding: 10px 0;
-  font-size: 13px;
-  font-weight: 700;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 600;
   text-transform: uppercase;
   color: var(--pub-text);
   cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+}
+
+.plp-sidebar-header:hover {
+  color: var(--pub-accent);
 }
 
 .plp-sidebar-list {
@@ -2581,17 +2598,32 @@ a {
 }
 
 .plp-sidebar-link {
-  font-size: 13px;
-  color: var(--pub-muted);
+  font-size: 14px;
+  color: #666;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: all 0.2s ease;
   display: block;
+  padding: 4px 0;
+  position: relative;
 }
 
 .plp-sidebar-link:hover,
 .plp-sidebar-link.active {
   color: var(--pub-accent);
   font-weight: 600;
+  transform: translateX(4px);
+}
+
+.plp-sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--pub-accent);
+  border-radius: 50%;
 }
 
 .plp-main {
@@ -4198,6 +4230,7 @@ a {
     box-shadow: -8px 0 24px rgba(0, 0, 0, 0.1);
     display: flex;
     overflow-y: auto;
+    height: 100% !important;
   }
 
   .plp-sidebar.open {
@@ -4646,18 +4679,67 @@ a {
   }
 
   /* Header improvements */
+  :root {
+    --pub-header-h: 70px;
+  }
+
   .pub-header {
-    height: 65px;
+    height: var(--pub-header-h);
   }
 
   .pub-header-inner {
-    padding: 0 16px;
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .pub-header-center {
+    display: none; /* Hide Desktop Nav */
+  }
+
+  .pub-search-wrapper {
+    flex: 0 1 180px;
+    order: 2;
+    margin: 0 auto;
+  }
+
+  .pub-search-form {
+    padding: 2px 10px;
+    border-radius: 20px;
+  }
+
+  .pub-header-left {
+    order: 1;
+  }
+
+  .pub-header-right {
+    order: 3;
+  }
+
+  .pub-logo img {
+    max-height: 40px;
+  }
+
+  .pub-search-dropdown {
+    position: fixed;
+    top: var(--pub-header-h);
+    left: 0;
+    right: 0;
+    width: 100vw;
+    border-radius: 0;
+    max-height: calc(100vh - var(--pub-header-h));
+    overflow-y: auto;
   }
 
 
   .pub-hamburger {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
+    padding: 6px;
+  }
+
+  .pub-hamburger:hover,
+  .pub-hamburger.open {
+    background: none;
   }
 
   /* Container padding */
@@ -4677,7 +4759,7 @@ a {
   .pub-main {
     width: 100%;
     overflow-x: hidden;
-    padding-top: 65px;
+    padding-top: var(--pub-header-h);
   }
 
   .section {
