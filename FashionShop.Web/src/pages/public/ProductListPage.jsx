@@ -1,48 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
-
-
-function VariantCard({ item }) {
-    const navigate = useNavigate();
-    const displayPrice = item.isOnSale && item.salePrice ? item.salePrice : item.basePrice;
-    const hasDiscount = item.isOnSale && item.salePrice;
-    const discountPercent = hasDiscount ? Math.round(((item.basePrice - item.salePrice) / item.basePrice) * 100) : 0;
-
-    return (
-        <div className="vcard" onClick={() => navigate(`/san-pham/${item.slug}${item.colorId ? `?color=${item.colorId}` : ''}`)}>
-            <div className="vcard-img">
-                {item.mainImageUrl
-                    ? <img src={item.mainImageUrl} alt={item.productName} loading="lazy" />
-                    : <div className="vcard-placeholder">🖼️</div>
-                }
-                <div className="vcard-labels">
-                    {item.isNew && <span className="label-new">NEW</span>}
-                    {item.isOnSale && <span className="label-sale">SALE</span>}
-                    {hasDiscount && discountPercent > 0 && <span className="label-percent">-{discountPercent}%</span>}
-                </div>
-            </div>
-            <div className="vcard-body">
-                <div className="vcard-price">
-                    {hasDiscount ? (
-                        <>
-                            <span className="vcard-price-sale">{displayPrice.toLocaleString('vi-VN')}₫</span>
-                            <span className="vcard-price-origin">{item.basePrice.toLocaleString('vi-VN')}₫</span>
-                        </>
-                    ) : (
-                        <span className="vcard-price-normal">{displayPrice?.toLocaleString('vi-VN')}₫</span>
-                    )}
-                </div>
-                <div className="vcard-name">{item.productName}</div>
-                {item.colorHex && (
-                    <div className="vcard-color-dot">
-                        <span style={{ background: item.colorHex }} title={item.colorName} />
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}
+import ProductCard from '../../components/ProductCard';
 
 
 const SORT_OPTIONS = [
@@ -266,7 +225,7 @@ export default function ProductListPage() {
                     ) : (
                         <>
                             <div className="vcard-grid">
-                                {paginatedItems.map((item, i) => <VariantCard key={`${item.productId}-${item.colorId ?? i}`} item={item} />)}
+                                {paginatedItems.map((item, i) => <ProductCard key={`${item.productId}-${item.colorId ?? i}`} item={item} />)}
                             </div>
 
                             {/* Pagination UI */}

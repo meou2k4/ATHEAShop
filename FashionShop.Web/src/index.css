@@ -2700,8 +2700,30 @@ a {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  transition: transform .45s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: transform .6s cubic-bezier(0.4, 0, 0.2, 1), opacity .5s ease !important;
   display: block !important;
+}
+
+.vcard-img-hover {
+  opacity: 0 !important;
+  z-index: 1;
+}
+
+.vcard-img-main {
+  opacity: 1 !important;
+  z-index: 2;
+}
+
+.vcard:hover .vcard-img-hover {
+  opacity: 1 !important;
+}
+
+.vcard:hover .vcard-img-main {
+  opacity: 0 !important;
+}
+
+.vcard:hover .vcard-img img {
+  transform: scale(1.08) !important;
 }
 
 .vcard-placeholder {
@@ -3109,12 +3131,47 @@ a {
   aspect-ratio: 3/4;
   background: #f5f0eb;
   position: relative;
+  overflow: hidden;
+  border-radius: 4px;
 }
 
 .gallery-main-athea img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.zoom-lens {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.product-zoom-mirror {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  background: #fff;
+  overflow: hidden;
+  border: 1px solid var(--pub-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+.product-zoom-mirror img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
 }
 
 /* Product Info */
@@ -3930,19 +3987,34 @@ a {
 }
 
 .img-zoom-modal .zoom-img-container {
-  max-width: 90vw;
-  max-height: 90vh;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  cursor: zoom-in;
+  transition: cursor 0.3s ease;
+  background: black; /* Đảm bảo nền tối hẳn khi zoom */
+}
+
+.img-zoom-modal .zoom-img-container.zoomed {
+  cursor: zoom-out;
 }
 
 .img-zoom-modal .zoom-img-container img {
-  max-width: 100%;
-  max-height: 90vh;
+  max-width: 95%;
+  max-height: 95vh;
   object-fit: contain;
-  cursor: grab;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform; /* GPU Acceleration */
+}
+
+.img-zoom-modal .zoom-img-container.zoomed img {
+  max-width: none;
+  max-height: none;
+  object-fit: scale-down; /* Giữ chất lượng ảnh tốt nhất khi zoom */
+  transition: transform 0.08s linear; /* Pan nhanh và mượt hơn */
 }
 
 .img-zoom-modal .zoom-img-container img:active {
@@ -5187,4 +5259,131 @@ a {
     font-size: 13px;
     padding: 0 8px;
   }
-}
+}
+
+/* ============================================
+   IN-PLACE ZOOM
+   ============================================ */
+
+.gallery-main-athea {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.gallery-main-athea img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ============================================
+   SIXDO-STYLE LIGHTBOX
+   ============================================ */
+@keyframes sixdoLbFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.sixdo-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sixdoLbFadeIn 0.25s ease;
+  cursor: zoom-out;
+}
+
+/* Close button — minimalist white × like sixdo */
+.sixdo-lb-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 36px;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10001;
+  padding: 4px 8px;
+  opacity: 0.85;
+  transition: opacity 0.2s, transform 0.2s;
+  font-family: inherit;
+}
+.sixdo-lb-close:hover {
+  opacity: 1;
+  transform: rotate(90deg);
+}
+
+/* Image counter top-left */
+.sixdo-lb-counter {
+  position: absolute;
+  top: 26px;
+  left: 28px;
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  z-index: 10001;
+  font-weight: 400;
+}
+
+/* Hint bottom-center */
+.sixdo-lb-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  color: rgba(255,255,255,0.35);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  z-index: 10001;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Image wrapper — fills viewport, stops click propagation */
+.sixdo-lb-img-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+.sixdo-lb-img-wrap.zoomed {
+  cursor: grab;
+}
+.sixdo-lb-img-wrap.zoomed:active {
+  cursor: grabbing;
+}
+
+/* The image itself */
+.sixdo-lb-img {
+  max-width: 95vw;
+  max-height: 92vh;
+  object-fit: contain;
+  display: block;
+  will-change: transform;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (max-width: 768px) {
+  .sixdo-lb-hint { display: none; }
+  .sixdo-lb-img { max-width: 100vw; max-height: 85vh; }
+}
+
+@media (max-width: 1024px) {
+  .product-zoom-mirror { display: none !important; }
+}

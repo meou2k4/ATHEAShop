@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import { sortSizes } from '../../utils/sizeHelper';
+import ProductCard from '../../components/ProductCard';
 
 export default function ProductDetailPage() {
     const { slug } = useParams();
@@ -18,24 +19,59 @@ export default function ProductDetailPage() {
     const [selectedSize, setSelectedSize] = useState(null);
     const [openAccordions, setOpenAccordions] = useState({ details: true, storage: true });
 
-    // Zoom Modal State
-    const [zoomImg, setZoomImg] = useState(null);
-    const [zoomLevel, setZoomLevel] = useState(1);
-    const [panPos, setPanPos] = useState({ x: 0, y: 0 });
+    // Lightbox State
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxIdx, setLightboxIdx] = useState(0);
+    const [isZoomed, setIsZoomed] = useState(false);
+    const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const dragStart = useRef(null);
+    const lastPan = useRef({ x: 0, y: 0 });
+    const imgRef = useRef(null);
+    const hasDragged = useRef(false);
 
+    // Hover Zoom State
+    const [isHovering, setIsHovering] = useState(false);
+    const [lensPos, setLensPos] = useState({ x: 0, y: 0 });
+
+    const handleMainMouseMove = (e) => {
+        const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+        const xProc = (e.clientX - left) / width;
+        const yProc = (e.clientY - top) / height;
+        setLensPos({ x: xProc * 100, y: yProc * 100 });
+    };
+
+    // --- Lightbox helpers ---
+    const openLightbox = (idx) => {
+        setLightboxIdx(idx);
+        setIsZoomed(false);
+        setPanOffset({ x: 0, y: 0 });
+        setLightboxOpen(true);
+    };
+
+    const closeLightbox = () => {
+        setLightboxOpen(false);
+        setIsZoomed(false);
+        setPanOffset({ x: 0, y: 0 });
+    };
+
+    // Keyboard navigation
     useEffect(() => {
+        if (!lightboxOpen) return;
         const handleKeyDown = (e) => {
-            if (e.key === 'Escape' && zoomImg) {
-                setZoomImg(null);
-                setZoomLevel(1);
-                setPanPos({ x: 0, y: 0 });
+            if (e.key === 'Escape') { closeLightbox(); return; }
+            if (e.key === 'ArrowRight') {
+                setIsZoomed(false); setPanOffset({ x: 0, y: 0 });
+                setLightboxIdx(prev => (prev + 1) % (lightboxImages?.length || 1));
+            }
+            if (e.key === 'ArrowLeft') {
+                setIsZoomed(false); setPanOffset({ x: 0, y: 0 });
+                setLightboxIdx(prev => (prev - 1 + (lightboxImages?.length || 1)) % (lightboxImages?.length || 1));
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [zoomImg]);
+    }, [lightboxOpen]);
 
     useEffect(() => {
         Promise.all([
@@ -49,21 +85,14 @@ export default function ProductDetailPage() {
             const validColors = [...new Set((productData.variants || []).map(v => v.colorId).filter(Boolean))];
 
             let targetColor = initColorId && validColors.includes(initColorId) ? initColorId : null;
-            if (!targetColor && validColors.length > 0) {
-                targetColor = validColors[0];
-            }
+            if (!targetColor && validColors.length > 0) targetColor = validColors[0];
 
             setSelectedColor(targetColor);
             setSelectedSize(null);
 
             const colorImages = targetColor ? (productData.images || []).filter(i => i.colorId === targetColor) : (productData.images || []);
-            
-            // Tìm ảnh chính: Ưu tiên ảnh chính của màu đã chọn -> Ảnh đầu tiên của màu -> Ảnh chính toàn cục -> Ảnh đầu tiên toàn cục
-            const mainImg = colorImages.find(i => i.isMain) 
-                || colorImages[0] 
-                || (productData.images || []).find(i => i.isMain) 
-                || productData.images?.[0] 
-                || null;
+            const mainImg = colorImages.find(i => i.isMain) || colorImages[0]
+                || (productData.images || []).find(i => i.isMain) || productData.images?.[0] || null;
 
             setActiveImg(mainImg);
 
@@ -71,12 +100,10 @@ export default function ProductDetailPage() {
             s.data.forEach(i => map[i.key] = i.value);
             setSettings(map);
 
-            // Sản phẩm cùng danh mục
             if (productData.categoryId) {
                 api.get(`/Product/variants-list?categoryId=${productData.categoryId}`)
                     .then(({ data }) => {
                         const items = Array.isArray(data) ? data : [];
-                        // Lấy đại diện mỗi sản phẩm, giữ thông tin biến thể màu đầu tiên
                         const seen = new Set();
                         const unique = items.filter(i => {
                             if (i.productId === productData.id) return false;
@@ -95,59 +122,83 @@ export default function ProductDetailPage() {
     if (!product) return null;
 
     const toggleAccordion = (key) => {
-        setOpenAccordions(prev => ({
-            ...prev,
-            [key]: !prev[key]
-        }));
+        setOpenAccordions(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    // Danh sách màu (duy nhất) từ variants
     const colors = [...new Map(
         (product.variants || []).filter(v => v.colorId).map(v => [v.colorId, { id: v.colorId, name: v.colorName, hex: v.colorHex }])
     ).values()];
 
-    // Danh sách size dựa theo màu đang chọn
     const sizesForColor = selectedColor
         ? (product.variants || []).filter(v => v.colorId === selectedColor).map(v => ({ id: v.sizeId, name: v.sizeName, stock: v.stock }))
         : [...new Map((product.variants || []).map(v => [v.sizeId, { id: v.sizeId, name: v.sizeName, stock: v.stock }])).values()];
 
-    // Ảnh tất cả: Sắp xếp để ảnh isMain luôn lên đầu
     const images = (product.images || []).sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
     const displayImages = selectedColor ? images.filter(i => i.colorId === selectedColor) : images;
-
     const mainDisplayImg = activeImg || displayImages[0] || (product.mainImageUrl ? { imageUrl: product.mainImageUrl } : null);
 
-    // Giá theo biến thể đang chọn
+    // Images available in lightbox = same as displayImages
+    const lightboxImages = displayImages.length > 0 ? displayImages : (product.mainImageUrl ? [{ imageUrl: product.mainImageUrl, id: 'main' }] : []);
+
     const currentVariant = product.variants?.find(v => v.colorId === selectedColor && v.sizeId === selectedSize);
     const displayPrice = currentVariant?.price || (product.isOnSale && product.salePrice ? product.salePrice : null);
     const basePrice = product.basePrice;
 
     const buildContactMsg = () => {
         let msg = `Tôi muốn hỏi về sản phẩm: ${product.name}`;
-        if (selectedColor) {
-            const c = colors.find(c => c.id === selectedColor);
-            msg += `, màu ${c?.name || ''}`;
-        }
-        if (selectedSize) {
-            const s = sizesForColor.find(s => s.id === selectedSize);
-            msg += `, size ${s?.name || ''}`;
-        }
+        if (selectedColor) { const c = colors.find(c => c.id === selectedColor); msg += `, màu ${c?.name || ''}`; }
+        if (selectedSize) { const s = sizesForColor.find(s => s.id === selectedSize); msg += `, size ${s?.name || ''}`; }
         return encodeURIComponent(msg);
     };
 
-    const zaloUrl = settings['Zalo']
-        ? `${settings['Zalo']}?text=${buildContactMsg()}`
-        : null;
+    const zaloUrl = settings['Zalo'] ? `${settings['Zalo']}?text=${buildContactMsg()}` : null;
     const fbUrl = settings['Facebook'] || null;
-
-    // Sửa lỗi categorySlug bị undefined: Nếu không có slug nhưng có categoryId, ta cần Link an toàn
     const categoryPath = product.categorySlug ? `/danh-muc/${product.categorySlug}` : `/san-pham?categoryId=${product.categoryId}`;
+
+    // --- Drag-to-pan handlers ---
+    const handleImgMouseDown = (e) => {
+        if (!isZoomed) return;
+        e.preventDefault();
+        setIsDragging(true);
+        hasDragged.current = false;
+        dragStart.current = { x: e.clientX - lastPan.current.x, y: e.clientY - lastPan.current.y };
+    };
+
+    const handleImgMouseMove = (e) => {
+        if (!isDragging || !isZoomed) return;
+        const dx = e.clientX - dragStart.current.x;
+        const dy = e.clientY - dragStart.current.y;
+        if (Math.abs(dx - lastPan.current.x) > 3 || Math.abs(dy - lastPan.current.y) > 3) {
+            hasDragged.current = true;
+        }
+        lastPan.current = { x: dx, y: dy };
+        setPanOffset({ x: dx, y: dy });
+    };
+
+    const handleImgMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleImgClick = (e) => {
+        e.stopPropagation();
+        if (hasDragged.current) return; // don't toggle if dragged
+        if (!isZoomed) {
+            setIsZoomed(true);
+            setPanOffset({ x: 0, y: 0 });
+            lastPan.current = { x: 0, y: 0 };
+        } else {
+            setIsZoomed(false);
+            setPanOffset({ x: 0, y: 0 });
+            lastPan.current = { x: 0, y: 0 };
+        }
+    };
+
+    const currentLightboxImg = lightboxImages[lightboxIdx];
 
     return (
         <>
             <div className="product-detail">
                 <div className="container">
-                    {/* Breadcrumb */}
                     <div className="breadcrumb pdp-breadcrumb">
                         <Link to="/">Trang chủ</Link>
                         <span className="breadcrumb-sep">/</span>
@@ -161,7 +212,6 @@ export default function ProductDetailPage() {
                     </div>
 
                     <div className="product-detail-grid">
-                        {/* Gallery */}
                         <div className="gallery-athea">
                             {displayImages.length > 1 && (
                                 <div className="gallery-thumbs-vert">
@@ -177,143 +227,148 @@ export default function ProductDetailPage() {
                                     ))}
                                 </div>
                             )}
-                            <div className="gallery-main-athea" style={{ cursor: 'zoom-in' }} onClick={() => {
-                                if (mainDisplayImg) {
-                                    setZoomImg(mainDisplayImg.imageUrl);
-                                    setZoomLevel(1);
-                                    setPanPos({ x: 0, y: 0 });
-                                }
-                            }}>
-                                {mainDisplayImg
-                                    ? <img src={mainDisplayImg.imageUrl} alt={product.name} />
-                                    : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80, color: '#d1c4b5' }}>🖼️</div>
-                                }
+                            <div
+                                className="gallery-main-athea"
+                                style={{ cursor: 'zoom-in' }}
+                                onClick={() => {
+                                    if (mainDisplayImg) {
+                                        const idx = displayImages.findIndex(i => i.id === mainDisplayImg.id);
+                                        openLightbox(idx >= 0 ? idx : 0);
+                                    }
+                                }}
+                                onMouseEnter={() => setIsHovering(true)}
+                                onMouseMove={handleMainMouseMove}
+                                onMouseLeave={() => setIsHovering(false)}
+                            >
+                                {mainDisplayImg ? (
+                                    <img
+                                        src={mainDisplayImg.imageUrl}
+                                        alt={product.name}
+                                        style={{
+                                            transform: isHovering ? 'scale(1.5)' : 'scale(1)',
+                                            transformOrigin: `${lensPos.x}% ${lensPos.y}%`,
+                                            transition: isHovering ? 'none' : 'transform 0.3s ease'
+                                        }}
+                                    />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80, color: '#d1c4b5' }}>🖼️</div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Product Info */}
-                        <div className="product-info">
-                            <div className="product-info-badges">
-                                {product.isNew && <span className="label-new">NEW</span>}
-                                {product.isOnSale && <span className="label-sale">SALE</span>}
-                            </div>
+                        <div className="product-detail-info-col" style={{ position: 'relative' }}>
+                            <div className="product-info">
+                                <div className="product-info-badges">
+                                    {product.isNew && <span className="label-new">NEW</span>}
+                                    {product.isOnSale && <span className="label-sale">SALE</span>}
+                                </div>
 
-                            {/* Title & Price */}
-                            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--pub-text)', marginBottom: 4 }}>{product.name}</h1>
-                            <div className="product-sku">MSP: {product.slug?.toUpperCase().substring(0, 15) || 'SKU-001'}</div>
+                                <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--pub-text)', marginBottom: 4 }}>{product.name}</h1>
+                                <div className="product-sku">MSP: {product.slug?.toUpperCase().substring(0, 15) || 'SKU-001'}</div>
 
-                            <div className="product-info-price">
-                                {displayPrice ? (
-                                    <>
-                                        <span className="product-price-sale">{displayPrice.toLocaleString('vi-VN')}₫</span>
-                                        <span className="product-price-origin">{basePrice.toLocaleString('vi-VN')}₫</span>
-                                    </>
-                                ) : (
-                                    <span className="product-price-normal">{basePrice?.toLocaleString('vi-VN')}₫</span>
+                                <div className="product-info-price">
+                                    {displayPrice ? (
+                                        <>
+                                            <span className="product-price-sale">{displayPrice.toLocaleString('vi-VN')}₫</span>
+                                            <span className="product-price-origin">{basePrice.toLocaleString('vi-VN')}₫</span>
+                                        </>
+                                    ) : (
+                                        <span className="product-price-normal">{basePrice?.toLocaleString('vi-VN')}₫</span>
+                                    )}
+                                </div>
+
+                                {colors.length > 0 && (
+                                    <div>
+                                        <div className="selector-label">COLOR : {selectedColor ? <strong>{colors.find(c => c.id === selectedColor)?.name}</strong> : ''}</div>
+                                        <div className="color-options-text" style={{ display: 'flex', gap: 10 }}>
+                                            {colors.map(c => (
+                                                <div
+                                                    key={c.id}
+                                                    title={c.name}
+                                                    className={`color-circle-item ${selectedColor === c.id ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        const newColor = c.id;
+                                                        if (newColor === selectedColor) return;
+                                                        setSelectedColor(newColor);
+                                                        setSelectedSize(null);
+                                                        const colorImages = images.filter(i => i.colorId === newColor);
+                                                        const matchingImg = colorImages.find(i => i.isMain) || colorImages[0]
+                                                            || images.find(i => i.isMain) || (images[0] ? images[0] : (product.mainImageUrl ? { imageUrl: product.mainImageUrl } : null));
+                                                        setActiveImg(matchingImg);
+                                                    }}
+                                                    style={{
+                                                        width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+                                                        backgroundColor: c.hex || '#000',
+                                                        border: '1px solid #e1e1e1',
+                                                        boxShadow: selectedColor === c.id ? '0 0 0 2px #fff, 0 0 0 4px #000' : 'none'
+                                                    }}
+                                                ></div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
-                            </div>
 
-                            {/* Chọn màu */}
-                            {colors.length > 0 && (
-                                <div>
-                                    <div className="selector-label">COLOR : {selectedColor ? <strong>{colors.find(c => c.id === selectedColor)?.name}</strong> : ''}</div>
-                                    <div className="color-options-text" style={{ display: 'flex', gap: 10 }}>
-                                        {colors.map(c => (
-                                            <div
-                                                key={c.id}
-                                                title={c.name}
-                                                className={`color-circle-item ${selectedColor === c.id ? 'active' : ''}`}
-                                                onClick={() => {
-                                                    const newColor = c.id;
-                                                    if (newColor === selectedColor) return;
+                                {sizesForColor.length > 0 && (
+                                    <div>
+                                        <div className="selector-label">SIZE :</div>
+                                        <div className="size-options-box">
+                                            {sortSizes(sizesForColor).map(s => (
+                                                <div
+                                                    key={s.id}
+                                                    className={`size-box ${selectedSize === s.id ? 'active' : ''}`}
+                                                    onClick={() => setSelectedSize(s.id === selectedSize ? null : s.id)}
+                                                >
+                                                    {s.name}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
-                                                    setSelectedColor(newColor);
-                                                    setSelectedSize(null);
-
-                                                    const colorImages = images.filter(i => i.colorId === newColor);
-                                                    const matchingImg = colorImages.find(i => i.isMain) 
-                                                        || colorImages[0] 
-                                                        || images.find(i => i.isMain) 
-                                                        || (images[0] ? images[0] : (product.mainImageUrl ? { imageUrl: product.mainImageUrl } : null));
-
-                                                    setActiveImg(matchingImg);
-                                                }}
-                                                style={{
-                                                    width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
-                                                    backgroundColor: c.hex || '#000',
-                                                    border: '1px solid #e1e1e1',
-                                                    boxShadow: selectedColor === c.id ? '0 0 0 2px #fff, 0 0 0 4px #000' : 'none'
-                                                }}
-                                            />
-                                        ))}
+                                <div className="product-actions-wrapper">
+                                    <div className="product-actions-athea">
+                                        {zaloUrl && (
+                                            <a href={zaloUrl} target="_blank" rel="noreferrer" className="btn-contact-social btn-contact-zalo">
+                                                <div className="social-icon-wrapper">
+                                                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg" alt="Zalo" />
+                                                </div>
+                                                <span>Zalo Mua Hàng</span>
+                                            </a>
+                                        )}
+                                        {fbUrl && (
+                                            <a href={fbUrl} target="_blank" rel="noreferrer" className="btn-contact-social btn-contact-fb">
+                                                <div className="social-icon-wrapper">
+                                                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                                        <path d="M12 2.03998C6.5 2.03998 2 6.52998 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.84998C10.44 7.33998 11.93 5.95998 14.22 5.95998C15.31 5.95998 16.45 6.14998 16.45 6.14998V8.61998H15.19C13.95 8.61998 13.56 9.38998 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.52998 17.5 2.03998 12 2.03998Z" />
+                                                    </svg>
+                                                </div>
+                                                <span>Facebook Mua Hàng</span>
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Chọn size */}
-                            {sizesForColor.length > 0 && (
-                                <div>
-                                    <div className="selector-label">SIZE :</div>
-                                    <div className="size-options-box">
-                                        {sortSizes(sizesForColor).map(s => (
-                                            <div
-                                                key={s.id}
-                                                className={`size-box ${selectedSize === s.id ? 'active' : ''}`}
-                                                onClick={() => setSelectedSize(s.id === selectedSize ? null : s.id)}
-                                            >
-                                                {s.name}
+                                <div className="accordion-athea">
+                                    <div className="acc-athea-item">
+                                        <button className="acc-athea-header" onClick={() => toggleAccordion('details')}>
+                                            CHI TIẾT <span className="acc-athea-icon">{openAccordions.details ? '-' : '+'}</span>
+                                        </button>
+                                        {openAccordions.details && (
+                                            <div className="acc-athea-body">
+                                                {product.description ? <div dangerouslySetInnerHTML={{ __html: product.description.replace(/\n/g, '<br/>') }} /> : <p>Chưa có mô tả.</p>}
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
-                                </div>
-                            )}
-
-                            {/* Nút liên hệ mua hàng */}
-                            <div className="product-actions-wrapper">
-                                <div className="product-actions-athea">
-                                    {zaloUrl && (
-                                        <a href={zaloUrl} target="_blank" rel="noreferrer" className="btn-contact-social btn-contact-zalo">
-                                            <div className="social-icon-wrapper">
-                                                <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg" alt="Zalo" />
+                                    <div className="acc-athea-item">
+                                        <button className="acc-athea-header" onClick={() => toggleAccordion('storage')}>
+                                            HƯỚNG DẪN BẢO QUẢN <span className="acc-athea-icon">{openAccordions.storage ? '-' : '+'}</span>
+                                        </button>
+                                        {openAccordions.storage && (
+                                            <div className="acc-athea-body">
+                                                {product.storageInstructions ? <div dangerouslySetInnerHTML={{ __html: product.storageInstructions.replace(/\n/g, '<br/>') }} /> : <p>Chưa có hướng dẫn bảo quản.</p>}
                                             </div>
-                                            <span>Zalo Mua Hàng</span>
-                                        </a>
-                                    )}
-                                    {fbUrl && (
-                                        <a href={fbUrl} target="_blank" rel="noreferrer" className="btn-contact-social btn-contact-fb">
-                                            <div className="social-icon-wrapper">
-                                                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                                    <path d="M12 2.03998C6.5 2.03998 2 6.52998 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.84998C10.44 7.33998 11.93 5.95998 14.22 5.95998C15.31 5.95998 16.45 6.14998 16.45 6.14998V8.61998H15.19C13.95 8.61998 13.56 9.38998 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.52998 17.5 2.03998 12 2.03998Z" />
-                                                </svg>
-                                            </div>
-                                            <span>Facebook Mua Hàng</span>
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Accordion Chi tiết & Lưu ý & Đổi trả */}
-                            <div className="accordion-athea">
-                                <div className="acc-athea-item">
-                                    <button className="acc-athea-header" onClick={() => toggleAccordion('details')}>
-                                        CHI TIẾT <span className="acc-athea-icon">{openAccordions.details ? '-' : '+'}</span>
-                                    </button>
-                                    {openAccordions.details && (
-                                        <div className="acc-athea-body">
-                                            {product.description ? <div dangerouslySetInnerHTML={{ __html: product.description.replace(/\n/g, '<br/>') }} /> : <p>Chưa có mô tả.</p>}
-
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="acc-athea-item">
-                                    <button className="acc-athea-header" onClick={() => toggleAccordion('storage')}>
-                                        HƯỚNG DẪN BẢO QUẢN <span className="acc-athea-icon">{openAccordions.storage ? '-' : '+'}</span>
-                                    </button>
-                                    {openAccordions.storage && (
-                                        <div className="acc-athea-body">
-                                            {product.storageInstructions ? <div dangerouslySetInnerHTML={{ __html: product.storageInstructions.replace(/\n/g, '<br/>') }} /> : <p>Chưa có hướng dẫn bảo quản.</p>}
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -321,7 +376,6 @@ export default function ProductDetailPage() {
                 </div>
             </div>
 
-            {/* Sản phẩm cùng danh mục */}
             {related.length > 0 && (
                 <section className="related-section">
                     <div className="container">
@@ -333,86 +387,68 @@ export default function ProductDetailPage() {
                         <div style={{ position: 'relative' }}>
                             <button className="nav-arrow-btn left" onClick={() => { document.getElementById('related-grid').scrollBy({ left: -300, behavior: 'smooth' }) }}>{'<'}</button>
                             <button className="nav-arrow-btn right" onClick={() => { document.getElementById('related-grid').scrollBy({ left: 300, behavior: 'smooth' }) }}>{'>'}</button>
-                            <div id="related-grid" className="product-grid related-grid-scroll">
-                                {related.map(p => {
-                                    const displayPrice = p.isOnSale && p.salePrice ? p.salePrice : p.basePrice;
-
-                                    return (
-                                        <div key={p.productId} className="vcard vcard-related" onClick={() => navigate(`/san-pham/${p.slug}${p.colorId ? `?color=${p.colorId}` : ''}`)}>
-                                            <div className="vcard-img">
-                                                {p.mainImageUrl
-                                                    ? <img src={p.mainImageUrl} alt={p.productName} loading="lazy" />
-                                                    : <div className="vcard-placeholder">🖼️</div>
-                                                }
-                                                <div className="vcard-labels">
-                                                    {p.isNew && <span className="label-new">NEW</span>}
-                                                    {p.isOnSale && <span className="label-sale">SALE</span>}
-                                                </div>
-                                            </div>
-                                            <div className="vcard-body">
-                                                <div className="vcard-price">
-                                                    {p.isOnSale && p.salePrice ? (
-                                                        <>
-                                                            <span className="vcard-price-sale">{displayPrice.toLocaleString('vi-VN')}₫</span>
-                                                            <span className="vcard-price-origin">{p.basePrice.toLocaleString('vi-VN')}₫</span>
-                                                        </>
-                                                    ) : (
-                                                        <span className="vcard-price-normal">{displayPrice?.toLocaleString('vi-VN')}₫</span>
-                                                    )}
-                                                </div>
-                                                <div className="vcard-name">{p.productName}</div>
-                                                {p.colorHex && (
-                                                    <div className="vcard-color-dot">
-                                                        <span style={{ background: p.colorHex }} title={p.colorName} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                            <div id="related-grid" className="related-grid-scroll">
+                                {related.map(p => (
+                                    <div key={`${p.productId}-${p.colorId}`} className="vcard-related">
+                                        <ProductCard item={p} />
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
                 </section>
             )}
 
-            {/* Fullscreen Zoom Modal */}
-            {zoomImg && (
-                <div className="img-zoom-modal" onClick={() => { setZoomImg(null); setZoomLevel(1); setPanPos({ x: 0, y: 0 }); }}>
-                    <button className="zoom-btn zoom-close" onClick={() => { setZoomImg(null); setZoomLevel(1); setPanPos({ x: 0, y: 0 }); }}>✖</button>
-                    <div className="zoom-controls" onClick={e => e.stopPropagation()}>
-                        <button className="zoom-btn" onClick={() => setZoomLevel(z => Math.max(0.5, z - 0.5))}>-</button>
-                        <span className="zoom-level-text">{Math.round(zoomLevel * 100)}%</span>
-                        <button className="zoom-btn" onClick={() => setZoomLevel(z => Math.min(4, z + 0.5))}>+</button>
-                        <button className="zoom-btn" style={{ width: 'auto', padding: '0 16px', borderRadius: '20px', fontSize: '14px', fontWeight: '500' }} onClick={() => { setZoomLevel(1); setPanPos({ x: 0, y: 0 }); }}>Đặt lại</button>
+            {/* ======= SIXDO-STYLE LIGHTBOX ======= */}
+            {lightboxOpen && currentLightboxImg && (
+                <div
+                    className="sixdo-lightbox"
+                    onClick={closeLightbox}
+                >
+                    {/* Close button */}
+                    <button
+                        className="sixdo-lb-close"
+                        onClick={closeLightbox}
+                        aria-label="Đóng"
+                    >
+                        ×
+                    </button>
+
+                    {/* Counter */}
+                    {lightboxImages.length > 1 && (
+                        <div className="sixdo-lb-counter">
+                            {lightboxIdx + 1} / {lightboxImages.length}
+                        </div>
+                    )}
+
+                    {/* Keyboard hint */}
+                    <div className="sixdo-lb-hint">
+                        {lightboxImages.length > 1 && <span>← → để chuyển ảnh</span>}
+                        <span>Click ảnh để zoom</span>
                     </div>
+
+                    {/* Image wrapper */}
                     <div
-                        className="zoom-img-container"
+                        className={`sixdo-lb-img-wrap ${isZoomed ? 'zoomed' : ''}`}
                         onClick={e => e.stopPropagation()}
-                        onMouseDown={e => {
-                            if (zoomLevel > 1) {
-                                setIsDragging(true);
-                                setDragStart({ x: e.clientX - panPos.x, y: e.clientY - panPos.y });
-                            }
-                        }}
-                        onMouseMove={e => {
-                            if (isDragging && zoomLevel > 1) {
-                                setPanPos({
-                                    x: e.clientX - dragStart.x,
-                                    y: e.clientY - dragStart.y
-                                });
-                            }
-                        }}
-                        onMouseUp={() => setIsDragging(false)}
-                        onMouseLeave={() => setIsDragging(false)}
-                        style={{ cursor: zoomLevel > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+                        onMouseDown={handleImgMouseDown}
+                        onMouseMove={handleImgMouseMove}
+                        onMouseUp={handleImgMouseUp}
+                        onMouseLeave={handleImgMouseUp}
                     >
                         <img
-                            src={zoomImg}
-                            alt="Phóng to"
+                            ref={imgRef}
+                            src={currentLightboxImg.imageUrl}
+                            alt={product.name}
+                            className="sixdo-lb-img"
+                            onClick={handleImgClick}
                             style={{
-                                transform: `translate(${panPos.x}px, ${panPos.y}px) scale(${zoomLevel})`,
-                                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+                                transform: isZoomed
+                                    ? `scale(2) translate(${panOffset.x / 2}px, ${panOffset.y / 2}px)`
+                                    : 'scale(1)',
+                                cursor: isZoomed ? (isDragging ? 'grabbing' : 'zoom-out') : 'zoom-in',
+                                transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                                userSelect: 'none',
                             }}
                             draggable={false}
                         />
@@ -422,4 +458,3 @@ export default function ProductDetailPage() {
         </>
     );
 }
-

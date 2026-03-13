@@ -74,8 +74,10 @@ const getVariantList = async (req, res) => {
     for (const p of products) {
         const colorIds = [...new Set(p.variants.map((v) => v.colorId))];
         for (const colorId of colorIds) {
-            const mainImg = p.images.find((i) => i.colorId === colorId && i.isMain)
-                || p.images.find((i) => i.colorId === colorId);
+            const colorImages = p.images.filter((i) => i.colorId === colorId);
+            const mainImg = colorImages.find((i) => i.isMain) || colorImages[0];
+            const hoverImg = colorImages.find((i) => i.id !== mainImg?.id) || null;
+
             const colorInfo = p.variants.find((v) => v.colorId === colorId)?.color;
             const sizes = p.variants
                 .filter((v) => v.colorId === colorId)
@@ -93,6 +95,7 @@ const getVariantList = async (req, res) => {
                 isOnSale: p.isOnSale,
                 isNew: p.isNew,
                 mainImageUrl: mainImg?.imageUrl || null,
+                hoverImageUrl: hoverImg?.imageUrl || null,
                 sizes,
             });
         }

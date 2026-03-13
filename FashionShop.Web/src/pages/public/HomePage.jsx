@@ -1,48 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axiosConfig';
-
-// ─── Component VariantCard (Tái sử dụng cho đồng bộ với ProductListPage) ────
-function VariantCard({ item }) {
-        const navigate = useNavigate();
-        const displayPrice = item.isOnSale && item.salePrice ? item.salePrice : item.basePrice;
-        const hasDiscount = item.isOnSale && item.salePrice;
-        const discountPercent = hasDiscount ? Math.round(((item.basePrice - item.salePrice) / item.basePrice) * 100) : 0;
-
-        return (
-                <div className="vcard" onClick={() => navigate(`/san-pham/${item.slug}`)}>
-                        <div className="vcard-img">
-                                {item.mainImageUrl
-                                        ? <img src={item.mainImageUrl} alt={item.productName} loading="lazy" />
-                                        : <div className="vcard-placeholder">👗</div>
-                                }
-                                <div className="vcard-labels">
-                                        {item.isNew && <span className="label-new">NEW</span>}
-                                        {item.isOnSale && <span className="label-sale">SALE</span>}
-                                        {hasDiscount && discountPercent > 0 && <span className="label-percent">-{discountPercent}%</span>}
-                                </div>
-                        </div>
-                        <div className="vcard-body">
-                                <div className="vcard-price">
-                                        {hasDiscount ? (
-                                                <>
-                                                        <span className="vcard-price-sale">{displayPrice.toLocaleString('vi-VN')}₫</span>
-                                                        <span className="vcard-price-origin">{item.basePrice.toLocaleString('vi-VN')}₫</span>
-                                                </>
-                                        ) : (
-                                                <span className="vcard-price-normal">{displayPrice?.toLocaleString('vi-VN')}₫</span>
-                                        )}
-                                </div>
-                                <div className="vcard-name">{item.productName}</div>
-                                {item.colorHex && (
-                                        <div className="vcard-color-dot">
-                                                <span style={{ background: item.colorHex }} title={item.colorName} />
-                                        </div>
-                                )}
-                        </div>
-                </div>
-        );
-}
+import ProductCard from '../../components/ProductCard';
 
 export default function HomePage() {
         const [newProducts, setNewProducts] = useState([]);
@@ -126,7 +85,7 @@ export default function HomePage() {
                                                         </div>
                                                 </div>
                                                 <div className="vcard-grid-home">
-                                                        {newProducts.map((p, i) => <VariantCard key={`${p.productId} - ${p.colorId ?? i}`} item={p} />)}
+                                                        {newProducts.map((p, i) => <ProductCard key={`${p.productId} - ${p.colorId ?? i}`} item={p} />)}
                                                 </div>
                                                 <div style={{ textAlign: 'center', marginTop: 32 }}>
                                                         <Link to="/san-pham?filter=new" className="btn-athea-outline" style={{ display: 'inline-flex' }}>Xem thêm</Link>
@@ -145,7 +104,7 @@ export default function HomePage() {
                                                         </div>
                                                 </div>
                                                 <div className="vcard-grid-home">
-                                                        {saleProducts.map((p, i) => <VariantCard key={`${p.productId} - ${p.colorId ?? i}`} item={p} />)}
+                                                        {saleProducts.map((p, i) => <ProductCard key={`${p.productId} - ${p.colorId ?? i}`} item={p} />)}
                                                 </div>
                                                 <div style={{ textAlign: 'center', marginTop: 32 }}>
                                                         <Link to="/san-pham?filter=sale" className="btn-athea-outline" style={{ display: 'inline-flex' }}>Xem thêm</Link>
@@ -170,13 +129,13 @@ export default function HomePage() {
                                                 </div>
                                                 <div className="policy-item">
                                                         <div className="policy-icon">🏪</div>
-                                                        <h4 className="policy-title">HỆ THỐNG CỬA HÀNG</h4>
-                                                        <p className="policy-desc">60 chi nhánh toàn quốc</p>
+                                                        <h4 className="policy-title">ONLINE STORE</h4>
+                                                        <p className="policy-desc">Giao hàng toàn quốc</p>
                                                 </div>
                                                 <div className="policy-item">
                                                         <div className="policy-icon">🚚</div>
                                                         <h4 className="policy-title">VẬN CHUYỂN</h4>
-                                                        <p className="policy-desc">Đồng giá 25k toàn quốc</p>
+                                                        <p className="policy-desc">Đồng giá 35k toàn quốc</p>
                                                 </div>
                                         </div>
                                 </div>
