@@ -32,25 +32,19 @@ export default function HomePage() {
 
         return (
                 <>
-                        {/* HERO - ATHEA STYLE (Light, elegant) */}
-                        <section className="hero-athea">
-                                <div className="hero-athea-content container">
-                                        <div className="hero-athea-text">
-                                                <div className="hero-athea-badge">Bộ sưu tập mới</div>
-                                                <h1>Định hình <span>phong cách</span> sang trọng</h1>
-                                                <p>Thời trang nữ cao cấp - tinh tế, hiện đại và vượt thời gian. Cùng khám phá những thiết kế tôn vinh vẻ đẹp của bạn.</p>
-                                                <div className="hero-athea-actions">
-                                                        <Link to="/san-pham?filter=new" className="btn-athea-primary">Khám phá ngay →</Link>
-                                                </div>
-                                        </div>
-                                        <div className="hero-athea-visual">
-                                                <div className="hero-athea-img-wrap">
-                                                        {heroImage ? (
-                                                                <img src={heroImage} alt="Bộ sưu tập mới" />
-                                                        ) : (
-                                                                <div className="hero-athea-placeholder">👗</div>
-                                                        )}
-                                                </div>
+                        {/* MAIN BANNER - Premium Full Width */}
+                        <section className="main-banner">
+                                <Link to="/san-pham" className="main-banner-mobile-link">
+                                        <img src="/Banner.jpg" alt="ATHEA Fashion Banner" className="main-banner-img" />
+                                        <div className="main-banner-overlay"></div>
+                                </Link>
+                                <div className="main-banner-content container">
+                                        <div className="main-banner-glass">
+                                                <span className="main-banner-subtitle">Premium Collection</span>
+                                                <h1 className="main-banner-title">
+                                                        ATHEA - Khơi nguồn <span>cảm hứng</span>
+                                                </h1>
+                                                <Link to="/san-pham" className="main-banner-btn">Khám phá ngay</Link>
                                         </div>
                                 </div>
                         </section>
@@ -112,6 +106,29 @@ export default function HomePage() {
                                         </div>
                                 </section>
                         )}
+
+                        {/* BRAND STORY - HERO ATHEA REFINED */}
+                        <section className="hero-athea hero-story">
+                                <div className="hero-athea-content container">
+                                        <div className="hero-athea-visual">
+                                                <div className="hero-athea-img-wrap">
+                                                        {heroImage ? (
+                                                                <img src={heroImage} alt="Brand Story" />
+                                                        ) : (
+                                                                <div className="hero-athea-placeholder">👗</div>
+                                                        )}
+                                                </div>
+                                        </div>
+                                        <div className="hero-athea-text">
+                                                <div className="hero-athea-badge">Về chúng tôi</div>
+                                                <h1>Hành trình của <span>Phong cách</span></h1>
+                                                <p>ATHEA không chỉ là thương hiệu thời trang, mà là ngôn ngữ của sự tự tin và tinh tế. Mỗi thiết kế là một câu chuyện về vẻ đẹp vượt thời gian, được tạo ra để tôn vinh phẩm chất riêng biệt của mỗi người phụ nữ.</p>
+                                                <div className="hero-athea-actions">
+                                                        <Link to="/san-pham" className="btn-athea-primary">Xem tất cả sản phẩm →</Link>
+                                                </div>
+                                        </div>
+                                </div>
+                        </section>
 
                         {/* POLICY BANNER (Dark Theme) */}
                         <section style={{ background: '#1c1c1c', color: 'white', padding: '40px 0' }}>

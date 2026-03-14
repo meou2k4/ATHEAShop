@@ -2211,6 +2211,236 @@ a {
   }
 }
 
+/* BRAND STORY SECTION (Bottom Refinement) */
+.hero-story {
+  padding: 100px 0;
+  background-color: var(--pub-surface);
+}
+
+.hero-story .hero-athea-content {
+  grid-template-columns: 1fr 1.2fr; /* Image left, text right */
+}
+
+.hero-story .hero-athea-visual {
+  justify-content: flex-start;
+  order: 1;
+}
+
+.hero-story .hero-athea-text {
+  order: 2;
+  padding-left: 20px;
+}
+
+.hero-story .hero-athea h1 {
+  font-size: clamp(32px, 4vw, 48px);
+  margin-bottom: 20px;
+}
+
+.hero-story .hero-athea-badge {
+  color: var(--pub-text);
+  opacity: 0.6;
+}
+
+@media (max-width: 1024px) {
+  .hero-story {
+    padding: 60px 0;
+  }
+  .hero-story .hero-athea-text {
+    order: 1;
+    padding-left: 0;
+  }
+  .hero-story .hero-athea-visual {
+    order: 2;
+  }
+}
+
+/* ============================================
+   MAIN BANNER (Premium Home)
+   ============================================ */
+.main-banner {
+  height: calc(100vh - 80px); /* Adjust based on header height */
+  min-height: 600px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  margin-top: 0;
+}
+
+.main-banner-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 1;
+}
+
+.main-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(0,0,0,0.4), transparent, rgba(0,0,0,0.4));
+  z-index: 2;
+}
+
+.main-banner-content {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+}
+
+.main-banner-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 60px 80px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  color: white;
+  max-width: 800px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  transform: translate(0px, 153px);
+  animation: bannerFadeUp 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes bannerFadeUp {
+  from { opacity: 0; transform: translate(0px, 183px); }
+  to { opacity: 1; transform: translate(0px, 153px); }
+}
+
+.main-banner-subtitle {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  margin-bottom: 24px;
+  font-weight: 500;
+  display: block;
+}
+
+.main-banner-title {
+  font-family: serif;
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 300;
+  line-height: 1.1;
+  margin-bottom: 32px;
+  letter-spacing: -1px;
+}
+
+.main-banner-title span {
+  font-weight: 600;
+  font-style: italic;
+}
+
+.main-banner-btn {
+  background: white;
+  color: black;
+  padding: 16px 48px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.3s;
+  display: inline-block;
+}
+
+.main-banner-btn:hover {
+  background: var(--pub-accent);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 1200px) {
+  .main-banner-glass {
+    transform: translate(0px, 100px);
+    padding: 50px 60px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-banner {
+    height: auto; /* Let image dictate height */
+    min-height: 0;
+  }
+  .main-banner-content {
+    display: none; /* Hide text overlay as requested */
+  }
+  .main-banner-img {
+    position: relative; /* Take up space in the flow */
+    height: auto;
+    width: 100%;
+    object-fit: contain; /* Ensure full visibility */
+    display: block;
+  }
+  .main-banner-mobile-link {
+    cursor: pointer;
+    pointer-events: auto; /* Enabled on iPad and Mobile whenever content is hidden */
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero-story {
+    padding: 60px 0;
+  }
+  .hero-story .hero-athea-text {
+    order: 1;
+    padding-left: 0;
+  }
+  .hero-story .hero-athea-visual {
+    order: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-banner {
+    height: auto;
+    min-height: 0;
+  }
+  .main-banner-mobile-link {
+    cursor: pointer;
+    pointer-events: auto; /* Enabled only on Phone */
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* MOBILE LANDSCAPE OPTIMIZATION */
+@media (max-height: 500px) and (min-width: 600px) {
+  .main-banner {
+    height: auto;
+    min-height: 0;
+  }
+  .main-banner-content {
+    display: none;
+  }
+  .main-banner-mobile-link {
+    cursor: pointer;
+    pointer-events: auto;
+    display: block;
+  }
+  
+  .hero-story {
+    padding: 40px 0;
+  }
+  .hero-story .hero-athea-content {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-banner {
+    height: auto;
+  }
+}
+
 /* ============================================
    CATEGORY PILLS (NEW DESIGN)
    ============================================ */
