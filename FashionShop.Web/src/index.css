@@ -2771,7 +2771,7 @@ a {
   border: 1px solid var(--pub-border);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .1);
-  z-index: 100;
+  z-index: 1000;
   min-width: 170px;
   overflow: hidden;
 }
@@ -2930,7 +2930,7 @@ a {
   border: 1px solid var(--pub-border);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   min-width: 180px;
-  z-index: 50;
+  z-index: 1000;
   margin-top: 8px;
 }
 
@@ -5159,6 +5159,8 @@ a {
     align-items: flex-start;
     gap: 12px;
     padding-bottom: 16px;
+    position: relative;
+    z-index: 100;
   }
 
   .plp-toolbar-left {
@@ -6039,10 +6041,9 @@ body {
 
 /* --- PLP toolbar polish --- */
 .plp-toolbar {
-  position: static;
-  /* desktop: không bám theo cuộn */
+  position: relative; /* Thay đổi từ static để z-index có tác dụng */
   top: auto;
-  z-index: 1;
+  z-index: 100; /* Đảm bảo cả toolbar nằm trên lưới sản phẩm */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -6105,11 +6106,16 @@ body {
 }
 
 .plp-sort-menu {
+  position: absolute;
+  top: 100%;
   right: 0;
   margin-top: 10px;
   box-shadow: var(--shadow-md);
   border-radius: 14px;
   overflow: hidden;
+  z-index: 1001; /* Nằm trên cả toolbar */
+  background: white;
+  border: 1px solid var(--border);
 }
 
 .plp-sort-option {
@@ -6129,7 +6135,8 @@ body {
 
 @media (max-width: 1024px) {
   .plp-toolbar {
-    position: static;
+    position: relative; /* Sửa từ static để z-index hoạt động */
+    z-index: 100;
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;

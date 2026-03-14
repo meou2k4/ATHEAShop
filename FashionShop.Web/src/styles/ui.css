@@ -170,6 +170,8 @@ input:focus {
   padding: 16px 18px;
   background: #fff;
   box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 100;
 }
 .plp-sort-btn,
 .plp-filter-btn {
@@ -183,6 +185,7 @@ input:focus {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-strong);
+  z-index: 1000;
 }
 .plp-sort-option.active {
   background: var(--brand-soft);

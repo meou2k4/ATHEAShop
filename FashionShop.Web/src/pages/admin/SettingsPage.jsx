@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../../api/axiosConfig';
 
 const DEFAULT_KEYS = [
@@ -30,7 +30,7 @@ export default function SettingsPage() {
         try {
             const payload = DEFAULT_KEYS.map(item => ({
                 key: item.key,
-                value: settings[item.key] || null,
+                value: settings[item.key] || '',
                 description: item.label
             }));
             await api.post('/Settings', payload);
@@ -49,12 +49,22 @@ export default function SettingsPage() {
                     {DEFAULT_KEYS.map(item => (
                         <div className="form-group" key={item.key}>
                             <label>{item.label}</label>
-                            <input
-                                className="form-control"
-                                placeholder={item.placeholder}
-                                value={settings[item.key] || ''}
-                                onChange={e => setSettings(s => ({ ...s, [item.key]: e.target.value }))}
-                            />
+                            {item.key === 'GoogleMapHtml' ? (
+                                <textarea
+                                    className="form-control"
+                                    placeholder={item.placeholder}
+                                    value={settings[item.key] || ''}
+                                    onChange={e => setSettings(s => ({ ...s, [item.key]: e.target.value }))}
+                                    rows={4}
+                                />
+                            ) : (
+                                <input
+                                    className="form-control"
+                                    placeholder={item.placeholder}
+                                    value={settings[item.key] || ''}
+                                    onChange={e => setSettings(s => ({ ...s, [item.key]: e.target.value }))}
+                                />
+                            )}
                         </div>
                     ))}
                     <button type="submit" className="btn btn-primary" disabled={saving}>

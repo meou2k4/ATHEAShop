@@ -13,8 +13,15 @@ const updateSettings = async (req, res) => {
     for (const item of items) {
         await prisma.setting.upsert({
             where: { key: item.key },
-            update: { value: item.value, ...(item.description ? { description: item.description } : {}) },
-            create: { key: item.key, value: item.value, description: item.description },
+            update: { 
+                value: item.value ?? "", 
+                ...(item.description ? { description: item.description } : {}) 
+            },
+            create: { 
+                key: item.key, 
+                value: item.value ?? "", 
+                description: item.description 
+            },
         });
     }
     res.json({ message: 'Cập nhật cấu hình thành công!' });
