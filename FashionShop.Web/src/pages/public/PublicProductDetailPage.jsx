@@ -26,33 +26,84 @@ export default function ProductDetailPage() {
     const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const dragStart = useRef(null);
-    const lastPan = useRef({ x: 0, y: 0 });
+    const panTarget = useRef({ x: 0, y: 0 });
+    const rafRef = useRef(null);
     const imgRef = useRef(null);
     const hasDragged = useRef(false);
 
     // Hover Zoom State
     const [isHovering, setIsHovering] = useState(false);
-    const [lensPos, setLensPos] = useState({ x: 0, y: 0 });
+    const [lensPos, setLensPos] = useState({ x: 50, y: 50 });
+    const [allowHover, setAllowHover] = useState(true);
+
+    useEffect(() => {
+        setAllowHover(window.matchMedia('(pointer: fine)').matches);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
+    }, []);
+
+    const handleMainMouseEnter = (e) => {
+        if (!allowHover) return;
+        const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+        setLensPos({
+            x: ((e.clientX - left) / width) * 100,
+            y: ((e.clientY - top) / height) * 100,
+        });
+        setIsHovering(true);
+    };
 
     const handleMainMouseMove = (e) => {
+        if (!allowHover) return;
         const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
         const xProc = (e.clientX - left) / width;
         const yProc = (e.clientY - top) / height;
         setLensPos({ x: xProc * 100, y: yProc * 100 });
     };
 
+    const resetPan = () => {
+        panTarget.current = { x: 0, y: 0 };
+        setPanOffset({ x: 0, y: 0 });
+    };
+
+    const schedulePan = () => {
+        if (rafRef.current) return;
+        rafRef.current = requestAnimationFrame(() => {
+            rafRef.current = null;
+            setPanOffset({ x: panTarget.current.x, y: panTarget.current.y });
+        });
+    };
+
+    const clampPan = (x, y) => {
+        const scale = 1.9;
+        const img = imgRef.current;
+        if (!img) return { x, y };
+        const baseW = img.clientWidth || 0;
+        const baseH = img.clientHeight || 0;
+        const maxX = (baseW * (scale - 1)) / 2;
+        const maxY = (baseH * (scale - 1)) / 2;
+        return {
+            x: Math.max(-maxX, Math.min(maxX, x)),
+            y: Math.max(-maxY, Math.min(maxY, y)),
+        };
+    };
+
     // --- Lightbox helpers ---
     const openLightbox = (idx) => {
         setLightboxIdx(idx);
         setIsZoomed(false);
-        setPanOffset({ x: 0, y: 0 });
+        resetPan();
         setLightboxOpen(true);
     };
 
     const closeLightbox = () => {
         setLightboxOpen(false);
         setIsZoomed(false);
-        setPanOffset({ x: 0, y: 0 });
+        resetPan();
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
 
     // Keyboard navigation
@@ -61,11 +112,13 @@ export default function ProductDetailPage() {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') { closeLightbox(); return; }
             if (e.key === 'ArrowRight') {
-                setIsZoomed(false); setPanOffset({ x: 0, y: 0 });
+                setIsZoomed(false);
+                resetPan();
                 setLightboxIdx(prev => (prev + 1) % (lightboxImages?.length || 1));
             }
             if (e.key === 'ArrowLeft') {
-                setIsZoomed(false); setPanOffset({ x: 0, y: 0 });
+                setIsZoomed(false);
+                resetPan();
                 setLightboxIdx(prev => (prev - 1 + (lightboxImages?.length || 1)) % (lightboxImages?.length || 1));
             }
         };
@@ -161,18 +214,19 @@ export default function ProductDetailPage() {
         e.preventDefault();
         setIsDragging(true);
         hasDragged.current = false;
-        dragStart.current = { x: e.clientX - lastPan.current.x, y: e.clientY - lastPan.current.y };
+        dragStart.current = { x: e.clientX - panTarget.current.x, y: e.clientY - panTarget.current.y };
     };
 
     const handleImgMouseMove = (e) => {
         if (!isDragging || !isZoomed) return;
         const dx = e.clientX - dragStart.current.x;
         const dy = e.clientY - dragStart.current.y;
-        if (Math.abs(dx - lastPan.current.x) > 3 || Math.abs(dy - lastPan.current.y) > 3) {
+        const next = clampPan(dx, dy);
+        if (Math.abs(next.x - panTarget.current.x) > 2 || Math.abs(next.y - panTarget.current.y) > 2) {
             hasDragged.current = true;
         }
-        lastPan.current = { x: dx, y: dy };
-        setPanOffset({ x: dx, y: dy });
+        panTarget.current = next;
+        schedulePan();
     };
 
     const handleImgMouseUp = () => {
@@ -184,12 +238,10 @@ export default function ProductDetailPage() {
         if (hasDragged.current) return; // don't toggle if dragged
         if (!isZoomed) {
             setIsZoomed(true);
-            setPanOffset({ x: 0, y: 0 });
-            lastPan.current = { x: 0, y: 0 };
+            resetPan();
         } else {
             setIsZoomed(false);
-            setPanOffset({ x: 0, y: 0 });
-            lastPan.current = { x: 0, y: 0 };
+            resetPan();
         }
     };
 
@@ -228,15 +280,20 @@ export default function ProductDetailPage() {
                                 </div>
                             )}
                             <div
-                                className="gallery-main-athea"
-                                style={{ cursor: 'zoom-in' }}
+                                className={`gallery-main-athea ${allowHover && isHovering ? 'is-hovering' : ''}`}
+                                style={{
+                                    cursor: mainDisplayImg ? 'zoom-in' : 'default',
+                                    '--zoom-origin-x': `${lensPos.x}%`,
+                                    '--zoom-origin-y': `${lensPos.y}%`,
+                                    '--zoom-scale': 1.6,
+                                }}
                                 onClick={() => {
                                     if (mainDisplayImg) {
                                         const idx = displayImages.findIndex(i => i.id === mainDisplayImg.id);
                                         openLightbox(idx >= 0 ? idx : 0);
                                     }
                                 }}
-                                onMouseEnter={() => setIsHovering(true)}
+                                onMouseEnter={handleMainMouseEnter}
                                 onMouseMove={handleMainMouseMove}
                                 onMouseLeave={() => setIsHovering(false)}
                             >
@@ -244,11 +301,7 @@ export default function ProductDetailPage() {
                                     <img
                                         src={mainDisplayImg.imageUrl}
                                         alt={product.name}
-                                        style={{
-                                            transform: isHovering ? 'scale(1.5)' : 'scale(1)',
-                                            transformOrigin: `${lensPos.x}% ${lensPos.y}%`,
-                                            transition: isHovering ? 'none' : 'transform 0.3s ease'
-                                        }}
+                                        loading="lazy"
                                     />
                                 ) : (
                                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80, color: '#d1c4b5' }}>🖼️</div>
@@ -332,7 +385,7 @@ export default function ProductDetailPage() {
                                                 <div className="social-icon-wrapper">
                                                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg" alt="Zalo" />
                                                 </div>
-                                                <span>Zalo Mua Hàng</span>
+                                                <span>Liên Hệ Zalo</span>
                                             </a>
                                         )}
                                         {fbUrl && (
@@ -342,7 +395,7 @@ export default function ProductDetailPage() {
                                                         <path d="M12 2.03998C6.5 2.03998 2 6.52998 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.84998C10.44 7.33998 11.93 5.95998 14.22 5.95998C15.31 5.95998 16.45 6.14998 16.45 6.14998V8.61998H15.19C13.95 8.61998 13.56 9.38998 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.52998 17.5 2.03998 12 2.03998Z" />
                                                     </svg>
                                                 </div>
-                                                <span>Facebook Mua Hàng</span>
+                                                <span>Liên Hệ Facebook</span>
                                             </a>
                                         )}
                                     </div>
@@ -440,14 +493,14 @@ export default function ProductDetailPage() {
                             ref={imgRef}
                             src={currentLightboxImg.imageUrl}
                             alt={product.name}
-                            className="sixdo-lb-img"
+                            className={`sixdo-lb-img ${isZoomed ? 'zoomed' : ''} ${isDragging ? 'dragging' : ''}`}
                             onClick={handleImgClick}
                             style={{
                                 transform: isZoomed
-                                    ? `scale(2) translate(${panOffset.x / 2}px, ${panOffset.y / 2}px)`
-                                    : 'scale(1)',
+                                    ? `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(1.9)`
+                                    : 'translate3d(0, 0, 0) scale(1)',
                                 cursor: isZoomed ? (isDragging ? 'grabbing' : 'zoom-out') : 'zoom-in',
-                                transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                                transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.2, 0.7, 0, 1)',
                                 userSelect: 'none',
                             }}
                             draggable={false}
