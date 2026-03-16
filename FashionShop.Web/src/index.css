@@ -3817,8 +3817,28 @@ a {
    ============================================ */
 .policy-page-wrapper {
   padding: 60px 24px;
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
+}
+
+.policy-revision-date {
+  text-align: center;
+  color: var(--pub-text-muted, #666);
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.policy-content.full-page-policy {
+  margin-top: 40px;
+  width: 100%;
+}
+
+.policy-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
 .policy-content {
