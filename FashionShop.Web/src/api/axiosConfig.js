@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Tự động xác định baseURL: Nếu là localhost thì gọi port 7299, nếu không thì dùng production
 const isLocal = window.location.hostname === 'localhost';
-const BASE_URL = isLocal ? 'http://localhost:7299/api' : 'https://atheashop-api.vercel.app/api';
+const BASE_URL = isLocal ? 'http://localhost:7299/api' : 'https://api.athea.vn/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
