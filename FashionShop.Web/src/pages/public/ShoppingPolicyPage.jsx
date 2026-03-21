@@ -389,11 +389,11 @@ const ShoppingPolicyPage = () => {
                                         <tbody>
                                             {sizeRows.map((row) => (
                                                 <tr key={row.size}>
-                                                    <td>{row.size}</td>
-                                                    <td>{row.height}</td>
-                                                    <td>{row.weight}</td>
-                                                    <td>{row.bust}</td>
-                                                    <td>{row.waist}</td>
+                                                    <td data-label="Size">{row.size}</td>
+                                                    <td data-label="Chiều cao">{row.height}</td>
+                                                    <td data-label="Cân nặng">{row.weight}</td>
+                                                    <td data-label="Vòng ngực">{row.bust}</td>
+                                                    <td data-label="Vòng eo">{row.waist}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -529,10 +529,10 @@ const ShoppingPolicyPage = () => {
                                         <tbody>
                                             {shippingRows.map((row) => (
                                                 <tr key={row.area}>
-                                                    <td>{row.area}</td>
-                                                    <td>{row.carrier}</td>
-                                                    <td>{row.fee}</td>
-                                                    <td>{row.time}</td>
+                                                    <td data-label="Khu vực">{row.area}</td>
+                                                    <td data-label="Đơn vị">{row.carrier}</td>
+                                                    <td data-label="Phí ship">{row.fee}</td>
+                                                    <td data-label="Thời gian">{row.time}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
