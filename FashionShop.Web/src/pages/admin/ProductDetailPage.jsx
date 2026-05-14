@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import { sortSizes } from '../../utils/sizeHelper';
 
-const API_BASE = 'https://www.athea.cloud';
+// Không dùng www. để tránh redirect Vercel block preflight OPTIONS
+const API_BASE = import.meta.env.VITE_API_URL || 'https://athea.cloud';
 
 function DetailModal({ productId, colors, sizes, editColor, editImages, editVariants, usedColorIds, onClose, onSaved }) {
     const isEdit = !!editColor;
@@ -113,25 +114,18 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
     };
 
     const processImageOnServer = async (item) => {
-        const token = localStorage.getItem('token');
         if (item.type === 'file') {
-            const fd = new FormData(); fd.append('file', item.file);
-            const res = await fetch(`${API_BASE}/api/Upload/image`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-                body: fd
+            const fd = new FormData();
+            fd.append('file', item.file);
+            // Dùng axios instance để baseURL tự khớp môi trường (local / production)
+            const { data } = await api.post('/Upload/image', fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
-            const data = await res.json();
             if (!data.url) throw new Error(data.message || 'Upload file thất bại');
             return data;
         } else {
             // item.type === 'url'
-            const res = await fetch(`${API_BASE}/api/Upload/image`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ imageUrl: item.url })
-            });
-            const data = await res.json();
+            const { data } = await api.post('/Upload/image', { imageUrl: item.url });
             if (!data.url) throw new Error(data.message || 'Xử lý URL ảnh thất bại');
             return data;
         }
@@ -166,7 +160,7 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
                 
                 // Nếu là ảnh mới hoặc link mới (pending)
                 if (item.status === 'pending') {
-                    // Bước 1: Upload lên server (Vercel Blob / Cloudinary)
+                    // Bước 1: Upload lên server (Vercel Blob)
                     const uploadRes = await processImageOnServer(item);
                     
                     // Bước 2: Lưu ngay vào database
@@ -335,7 +329,7 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
                             </div>
                         </div>
                         <div className="url-add-bar">
-                            <input className="form-control" placeholder="Dán link ảnh (Cloudinary, Vercel Blob...)"
+                            <input className="form-control" placeholder="Dán link ảnh (Vercel Blob, URL công khai...)"  
                                 value={urlInput} onChange={e => setUrlInput(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && addUrls(e)} />
                             <button type="button" className="btn-url-add" onClick={addUrls}>

@@ -265,7 +265,8 @@ const deleteImage = async (req, res) => {
     const imageId = +req.params.imageId;
     const existed = await prisma.productImage.findUnique({ where: { id: imageId } });
     if (!existed) return res.status(404).json({ message: 'Không tìm thấy ảnh.' });
-    // Tuỳ chọn: xóa ảnh khỏi Cloudinary nếu có publicId
+    // Lưu ý: file vật lý trên Vercel Blob không tự xoá.
+    // Nếu cần dọn storage, dùng del(existed.publicId) từ @vercel/blob trước khi xoá DB.
     await prisma.productImage.delete({ where: { id: imageId } });
     res.status(204).send();
 };

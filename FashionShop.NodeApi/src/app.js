@@ -5,10 +5,25 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+    'https://athea.vn',
+    'https://www.athea.vn',
+    'https://athea.cloud',
+    'https://www.athea.cloud',
+    'http://localhost:3000',
+    'http://localhost:5173',
+];
 app.use(cors({
-    origin: ['https://athea.vn', 'https://www.athea.vn', 'http://localhost:3000', 'http://localhost:5173'],
-    credentials: true
+    origin: (origin, callback) => {
+        // Cho phép requests không có origin (Postman, server-to-server)
+        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS: Origin "${origin}" không được phép.`));
+    },
+    credentials: true,
+    optionsSuccessStatus: 204,
 }));
+// Xử lý preflight OPTIONS cho tất cả routes
+app.options('*', cors());
 app.use(express.json());
 
 // Routes
