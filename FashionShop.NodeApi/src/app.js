@@ -22,8 +22,7 @@ app.use(cors({
     credentials: true,
     optionsSuccessStatus: 204,
 }));
-// Xử lý preflight OPTIONS cho tất cả routes
-app.options('*', cors());
+
 app.use(express.json());
 
 // Routes
