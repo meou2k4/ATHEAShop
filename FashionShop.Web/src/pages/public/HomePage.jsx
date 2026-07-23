@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import ProductCard from '../../components/ProductCard';
 import { ProductSkeleton } from '../../components/Skeleton';
+import { getOptimizedImageUrl } from '../../utils/imageHelper';
 
 export default function HomePage() {
         const [newProducts, setNewProducts] = useState([]);
@@ -42,23 +43,27 @@ export default function HomePage() {
                 );
         }
 
-        const heroImage = newProducts[0]?.mainImageUrl || '';
+        const bannerImg = settings['BannerUrl'] ? getOptimizedImageUrl(settings['BannerUrl'], 1600) : '/Banner.jpg';
+        const bannerSubtitle = settings['BannerSubtitle'] || 'Premium Collection';
+        const bannerTitle = settings['BannerTitle'] || 'ATHEA - Khơi nguồn cảm hứng';
+        const bannerBtnText = settings['BannerBtnText'] || 'Khám phá ngay';
+        const bannerBtnLink = settings['BannerBtnLink'] || '/san-pham';
 
         return (
                 <>
-                        {/* MAIN BANNER - Premium Full Width */}
+                        {/* MAIN BANNER - Dynamic Banner */}
                         <section className="main-banner">
-                                <Link to="/san-pham" className="main-banner-mobile-link">
-                                        <img src="/Banner.jpg" alt="ATHEA Fashion Banner" className="main-banner-img" />
+                                <Link to={bannerBtnLink} className="main-banner-mobile-link">
+                                        <img src={bannerImg} alt={bannerTitle} className="main-banner-img" />
                                         <div className="main-banner-overlay"></div>
                                 </Link>
                                 <div className="main-banner-content container">
                                         <div className="main-banner-glass">
-                                                <span className="main-banner-subtitle">Premium Collection</span>
+                                                <span className="main-banner-subtitle">{bannerSubtitle}</span>
                                                 <h1 className="main-banner-title">
-                                                        ATHEA - Khơi nguồn <span>cảm hứng</span>
+                                                        {bannerTitle}
                                                 </h1>
-                                                <Link to="/san-pham" className="main-banner-btn">Khám phá ngay</Link>
+                                                <Link to={bannerBtnLink} className="main-banner-btn">{bannerBtnText}</Link>
                                         </div>
                                 </div>
                         </section>
