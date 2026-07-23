@@ -48,6 +48,7 @@ export default function HomePage() {
         const bannerTitle = settings['BannerTitle'] || 'ATHEA - Khơi nguồn cảm hứng';
         const bannerBtnText = settings['BannerBtnText'] || 'Khám phá ngay';
         const bannerBtnLink = settings['BannerBtnLink'] || '/san-pham';
+        const heroImage = newProducts[0]?.mainImageUrl || '';
 
         return (
                 <>
