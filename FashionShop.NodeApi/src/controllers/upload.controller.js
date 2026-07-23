@@ -29,11 +29,11 @@ const optimizeImage = async (buffer, isGif = false) => {
     const optimized = await sharp(buffer)
         .rotate()                          // Auto-rotate theo EXIF để tránh ảnh bị lật
         .resize({
-            width: 1800,
-            withoutEnlargement: true,      // Không phóng to ảnh nhỏ hơn 1800px
+            width: 1200,
+            withoutEnlargement: true,      // Không phóng to ảnh nhỏ hơn 1200px
             fit: 'inside',
         })
-        .webp({ quality: 82 })             // Convert sang WebP, chất lượng 82%
+        .webp({ quality: 80 })             // Convert sang WebP chất lượng 80%
         .toBuffer();
 
     return { buffer: optimized, contentType: 'image/webp', ext: 'webp' };

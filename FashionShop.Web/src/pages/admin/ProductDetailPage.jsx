@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import { sortSizes } from '../../utils/sizeHelper';
+import { ProductDetailSkeleton } from '../../components/Skeleton';
 
 // Không dùng www. để tránh redirect Vercel block preflight OPTIONS
 const API_BASE = import.meta.env.VITE_API_URL || 'https://athea.cloud';
@@ -153,42 +154,47 @@ function DetailModal({ productId, colors, sizes, editColor, editImages, editVari
                 throw new Error('Phát hiện kích thước trùng lặp. Mỗi kích thước chỉ được xuất hiện một lần cho mỗi màu.');
             }
             
-            // Xử lý từng ảnh một: Upload -> Lưu DB
+            // 3. Xử lý tải ảnh ĐỒNG THỜI (Concurrent Parallel Uploading)
             const currentImgItems = [...imgItems];
-            for (let i = 0; i < currentImgItems.length; i++) {
-                const item = currentImgItems[i];
-                
-                // Nếu là ảnh mới hoặc link mới (pending)
+            
+            const imagePromises = currentImgItems.map(async (item, index) => {
                 if (item.status === 'pending') {
-                    // Bước 1: Upload lên server (Vercel Blob)
+                    // Upload song song lên server
                     const uploadRes = await processImageOnServer(item);
                     
-                    // Bước 2: Lưu ngay vào database
-                    await api.post(`/Product/${productId}/images`, {
+                    // Lưu vào DB
+                    const { data: savedDbImg } = await api.post(`/Product/${productId}/images`, {
                         imageUrl: uploadRes.url,
                         publicId: uploadRes.publicId,
                         colorId,
                         isMain: item.isMain,
                     });
 
-                    // Cập nhật trạng thái item trong mảng local
-                    currentImgItems[i] = {
-                        ...item,
-                        id: uploadRes.publicId || item.id, // Dùng ID từ server nếu có
-                        url: uploadRes.url,
-                        previewUrl: uploadRes.url,
-                        status: 'saved'
+                    return {
+                        index,
+                        item: {
+                            ...item,
+                            id: savedDbImg?.id || uploadRes.publicId || item.id,
+                            url: uploadRes.url,
+                            previewUrl: uploadRes.url,
+                            status: 'saved'
+                        }
                     };
-                } 
-                // Nếu là ảnh đã có nhưng có thay đổi (ví dụ đổi isMain)
-                else if (item.status === 'saved') {
+                } else if (item.status === 'saved') {
                     await api.put(`/Product/${productId}/images/${item.id}`, {
                         imageUrl: item.url, 
                         colorId, 
                         isMain: item.isMain,
                     });
+                    return { index, item };
                 }
-            }
+                return { index, item };
+            });
+
+            const processedResults = await Promise.all(imagePromises);
+            processedResults.forEach(res => {
+                currentImgItems[res.index] = res.item;
+            });
             setImgItems(currentImgItems);
 
             // Xử lý biến thể (size/price)
@@ -375,7 +381,7 @@ export default function ProductDetailPage() {
         init();
     }, [id, fetchProduct]);
 
-    if (!product) return <div className="loading">⏳ Đang tải...</div>;
+    if (!product) return <ProductDetailSkeleton />;
 
     const colorMap = {};
     (product.variants || []).forEach(v => {

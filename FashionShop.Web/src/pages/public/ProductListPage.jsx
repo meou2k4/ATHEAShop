@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import ProductCard from '../../components/ProductCard';
+import { ProductSkeleton } from '../../components/Skeleton';
 
 
 const SORT_OPTIONS = [
@@ -28,43 +29,43 @@ export default function ProductListPage() {
     const sortRef = useRef();
 
     useEffect(() => {
-        api.get('/Category').then(({ data }) => setCategories(data)).catch(() => { });
-    }, []);
-
-    useEffect(() => {
         setLoading(true);
         let params = new URLSearchParams();
         if (categoryId) params.set('categoryId', categoryId);
         if (filter === 'new') params.set('isNew', 'true');
         if (filter === 'sale') params.set('isOnSale', 'true');
 
-        api.get(`/Product/variants-list?${params}`)
-            .then(({ data }) => {
-                let list = Array.isArray(data) ? data : [];
+        Promise.all([
+            api.get('/Category').catch(() => ({ data: [] })),
+            api.get(`/Product/variants-list?${params}`).catch(() => ({ data: [] }))
+        ]).then(([catRes, prodRes]) => {
+            setCategories(catRes.data || []);
+            
+            let list = Array.isArray(prodRes.data) ? prodRes.data : [];
+            
+            // Search Logic
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase().trim();
                 
-                // Search Logic
-                if (searchQuery) {
-                    const q = searchQuery.toLowerCase().trim();
-                    
-                    // 1. Kiểm tra Slug khớp chuẩn trước
-                    const slugMatch = list.filter(item => item.slug && item.slug.toLowerCase() === q);
-                    
-                    if (slugMatch.length > 0) {
-                        list = slugMatch;
-                    } else {
-                        // 2. Nếu không khớp slug chuẩn, tìm theo tên liên quan
-                        list = list.filter(item => 
-                            item.productName.toLowerCase().includes(q) ||
-                            (item.categoryName && item.categoryName.toLowerCase().includes(q))
-                        );
-                    }
+                // 1. Kiểm tra Slug khớp chuẩn trước
+                const slugMatch = list.filter(item => item.slug && item.slug.toLowerCase() === q);
+                
+                if (slugMatch.length > 0) {
+                    list = slugMatch;
+                } else {
+                    // 2. Nếu không khớp slug chuẩn, tìm theo tên liên quan
+                    list = list.filter(item => 
+                        item.productName.toLowerCase().includes(q) ||
+                        (item.categoryName && item.categoryName.toLowerCase().includes(q))
+                    );
                 }
+            }
 
-                setAllItems(list);
-                setCurrentPage(1); // Reset về trang 1 khi load data mới
-            })
-            .catch(() => setAllItems([]))
-            .finally(() => setLoading(false));
+            setAllItems(list);
+            setCurrentPage(1);
+        })
+        .catch(() => setAllItems([]))
+        .finally(() => setLoading(false));
     }, [filter, categoryId, searchQuery]);
 
     // Close sort dropdown on outside click
@@ -212,7 +213,11 @@ export default function ProductListPage() {
                 {/* Grid */}
                 {
                     loading ? (
-                        <div className="loading" style={{ paddingTop: 80 }}>⏳ Đang tải...</div>
+                        <div className="vcard-grid" style={{ paddingTop: 20 }}>
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                                <ProductSkeleton key={i} />
+                            ))}
+                        </div>
                     ) : totalItems === 0 ? (
                         <div className="empty-state" style={{ paddingTop: 80 }}>
                             <div className="empty-icon">📂</div>

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import api from '../../api/axiosConfig';
 import { sortSizes } from '../../utils/sizeHelper';
 import ProductCard from '../../components/ProductCard';
+import { ProductDetailSkeleton } from '../../components/Skeleton';
 
 export default function ProductDetailPage() {
     const { slug } = useParams();
@@ -127,51 +128,57 @@ export default function ProductDetailPage() {
     }, [lightboxOpen]);
 
     useEffect(() => {
-        Promise.all([
-            api.get(`/Product/by-slug/${slug}`),
-            api.get('/Settings').catch(() => ({ data: [] })),
-        ]).then(([p, s]) => {
-            const productData = p.data;
-            setProduct(productData);
+        setLoading(true);
+        api.get(`/Product/by-slug/${slug}`)
+            .then(async (p) => {
+                const productData = p.data;
+                setProduct(productData);
 
-            const initColorId = searchParams.get('color') ? Number(searchParams.get('color')) : null;
-            const validColors = [...new Set((productData.variants || []).map(v => v.colorId).filter(Boolean))];
+                // Đồng bộ lấy Settings & Related Products cùng lúc qua Promise.all
+                const [sRes, relRes] = await Promise.all([
+                    api.get('/Settings').catch(() => ({ data: [] })),
+                    productData.categoryId 
+                        ? api.get(`/Product/variants-list?categoryId=${productData.categoryId}`).catch(() => ({ data: [] }))
+                        : Promise.resolve({ data: [] })
+                ]);
 
-            let targetColor = initColorId && validColors.includes(initColorId) ? initColorId : null;
-            if (!targetColor && validColors.length > 0) targetColor = validColors[0];
+                // 1. Cấu hình màu sắc & ảnh mặc định
+                const initColorId = searchParams.get('color') ? Number(searchParams.get('color')) : null;
+                const validColors = [...new Set((productData.variants || []).map(v => v.colorId).filter(Boolean))];
 
-            setSelectedColor(targetColor);
-            setSelectedSize(null);
+                let targetColor = initColorId && validColors.includes(initColorId) ? initColorId : null;
+                if (!targetColor && validColors.length > 0) targetColor = validColors[0];
 
-            const colorImages = targetColor ? (productData.images || []).filter(i => i.colorId === targetColor) : (productData.images || []);
-            const mainImg = colorImages.find(i => i.isMain) || colorImages[0]
-                || (productData.images || []).find(i => i.isMain) || productData.images?.[0] || null;
+                setSelectedColor(targetColor);
+                setSelectedSize(null);
 
-            setActiveImg(mainImg);
+                const colorImages = targetColor ? (productData.images || []).filter(i => i.colorId === targetColor) : (productData.images || []);
+                const mainImg = colorImages.find(i => i.isMain) || colorImages[0]
+                    || (productData.images || []).find(i => i.isMain) || productData.images?.[0] || null;
 
-            const map = {};
-            s.data.forEach(i => map[i.key] = i.value);
-            setSettings(map);
+                setActiveImg(mainImg);
 
-            if (productData.categoryId) {
-                api.get(`/Product/variants-list?categoryId=${productData.categoryId}`)
-                    .then(({ data }) => {
-                        const items = Array.isArray(data) ? data : [];
-                        const seen = new Set();
-                        const unique = items.filter(i => {
-                            if (i.productId === productData.id) return false;
-                            if (seen.has(i.productId)) return false;
-                            seen.add(i.productId);
-                            return true;
-                        }).slice(0, 6);
-                        setRelated(unique);
-                    }).catch(() => { });
-            }
-        }).catch(() => navigate('/san-pham'))
+                // 2. Cấu hình Settings
+                const map = {};
+                (sRes.data || []).forEach(i => map[i.key] = i.value);
+                setSettings(map);
+
+                // 3. Cấu hình sản phẩm liên quan
+                const items = Array.isArray(relRes.data) ? relRes.data : [];
+                const seen = new Set();
+                const unique = items.filter(i => {
+                    if (i.productId === productData.id) return false;
+                    if (seen.has(i.productId)) return false;
+                    seen.add(i.productId);
+                    return true;
+                }).slice(0, 6);
+                setRelated(unique);
+            })
+            .catch(() => navigate('/san-pham'))
             .finally(() => setLoading(false));
     }, [slug, navigate, searchParams]);
 
-    if (loading) return <div className="loading" style={{ paddingTop: 100 }}>⏳ Đang tải...</div>;
+    if (loading) return <ProductDetailSkeleton />;
     if (!product) return null;
 
     const toggleAccordion = (key) => {

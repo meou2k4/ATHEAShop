@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import ProductCard from '../../components/ProductCard';
+import { ProductSkeleton } from '../../components/Skeleton';
 
 export default function HomePage() {
         const [newProducts, setNewProducts] = useState([]);
@@ -26,7 +27,20 @@ export default function HomePage() {
                 }).catch(() => { }).finally(() => setLoading(false));
         }, []);
 
-        if (loading) return <div className="loading" style={{ paddingTop: 100 }}>⏳ Đang tải...</div>;
+        if (loading) {
+                return (
+                        <div className="container" style={{ paddingTop: 60, paddingBottom: 60 }}>
+                                <div className="section-header" style={{ marginBottom: 32, justifyContent: 'center' }}>
+                                        <div className="section-title">NEW ARRIVAL</div>
+                                </div>
+                                <div className="vcard-grid-home">
+                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                                                <ProductSkeleton key={i} />
+                                        ))}
+                                </div>
+                        </div>
+                );
+        }
 
         const heroImage = newProducts[0]?.mainImageUrl || '';
 

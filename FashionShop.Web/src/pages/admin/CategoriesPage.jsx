@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axiosConfig';
+import { TableSkeleton } from '../../components/Skeleton';
 
 export default function CategoriesPage() {
     const [categories, setCategories] = useState([]);
@@ -120,7 +121,7 @@ export default function CategoriesPage() {
             </div>
 
             <div className="card">
-                {loading ? <div className="loading">Đang tải...</div> : (
+                {loading ? <TableSkeleton rows={6} cols={6} /> : (
                     <div className="data-list-container">
                         <div className="data-list-header grid-categories-v2">
                             <div className="data-list-cell text-center">STT</div>

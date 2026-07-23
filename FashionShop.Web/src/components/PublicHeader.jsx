@@ -1,6 +1,21 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api/axiosConfig';
+import { getOptimizedImageUrl } from '../utils/imageHelper';
+
+/**
+ * Helper xóa dấu tiếng Việt phục vụ tìm kiếm thông minh
+ */
+function normalizeString(str) {
+    if (!str) return '';
+    return str
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'd')
+        .trim();
+}
 
 export default function PublicHeader() {
     const location = useLocation();
@@ -14,6 +29,9 @@ export default function PublicHeader() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
+    
+    // Cache danh sách sản phẩm để gợi ý tức thì
+    const productsCache = useRef(null);
     const searchRef = useRef(null);
 
     const filter = new URLSearchParams(location.search).get('filter');
@@ -23,6 +41,19 @@ export default function PublicHeader() {
         const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Pre-fetch sản phẩm để tìm kiếm tức thì
+    const loadProductsCache = useCallback(async () => {
+        if (productsCache.current) return productsCache.current;
+        try {
+            const { data } = await api.get('/Product/variants-list');
+            const list = Array.isArray(data) ? data : [];
+            productsCache.current = list;
+            return list;
+        } catch {
+            return [];
+        }
     }, []);
 
     // Close menu/suggestions on route change
@@ -43,9 +74,10 @@ export default function PublicHeader() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Debounced search logic
+    // Debounced & Fast Search Logic (Hỗ trợ từ 1 ký tự)
     useEffect(() => {
-        if (!searchQuery.trim() || searchQuery.length < 2) {
+        const qRaw = searchQuery.trim();
+        if (!qRaw || qRaw.length < 1) {
             setSuggestions([]);
             setShowSuggestions(false);
             return;
@@ -54,18 +86,24 @@ export default function PublicHeader() {
         const timer = setTimeout(async () => {
             setIsSearching(true);
             try {
-                // Fetch products to filter
-                const { data } = await api.get('/Product/variants-list');
-                const list = Array.isArray(data) ? data : [];
-                
-                const q = searchQuery.toLowerCase();
-                const filtered = list.filter(p => 
-                    p.productName.toLowerCase().includes(q) || 
-                    (p.categoryName && p.categoryName.toLowerCase().includes(q)) ||
-                    (p.slug && p.slug.toLowerCase() === q)
-                );
+                const list = await loadProductsCache();
+                const qNormalized = normalizeString(qRaw);
+                const qLower = qRaw.toLowerCase();
 
-                // Group by productId to avoid duplicate variants in suggestions
+                const filtered = list.filter(p => {
+                    const nameNorm = normalizeString(p.productName);
+                    const catNorm = normalizeString(p.categoryName || '');
+                    const slugLower = (p.slug || '').toLowerCase();
+
+                    return (
+                        nameNorm.includes(qNormalized) ||
+                        catNorm.includes(qNormalized) ||
+                        slugLower.includes(qLower) ||
+                        (p.colorName && normalizeString(p.colorName).includes(qNormalized))
+                    );
+                });
+
+                // Lọc sản phẩm trùng lặp variant
                 const uniqueProducts = [];
                 const seen = new Set();
                 for (const item of filtered) {
@@ -84,10 +122,10 @@ export default function PublicHeader() {
             } finally {
                 setIsSearching(false);
             }
-        }, 300);
+        }, 150); // Phản hồi cực nhanh 150ms
 
         return () => clearTimeout(timer);
-    }, [searchQuery]);
+    }, [searchQuery, loadProductsCache]);
 
     const handleSearchSubmit = (e) => {
         e?.preventDefault();
@@ -145,7 +183,10 @@ export default function PublicHeader() {
                                 placeholder="Tìm sản phẩm..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
+                                onFocus={() => {
+                                    loadProductsCache();
+                                    if (searchQuery.trim().length >= 1) setShowSuggestions(true);
+                                }}
                                 onKeyDown={handleKeyDown}
                             />
                             <button type="submit" className="pub-search-btn">
@@ -159,7 +200,17 @@ export default function PublicHeader() {
                         {showSuggestions && (
                             <div className="pub-search-dropdown">
                                 {isSearching ? (
-                                    <div className="search-loading">Đang tìm...</div>
+                                    <div className="search-results p-2 space-y-2">
+                                        {[1, 2, 3].map((i) => (
+                                            <div key={i} style={{ display: 'flex', gap: 10, padding: 8, alignItems: 'center' }}>
+                                                <div style={{ width: 40, height: 50, background: '#e2e8f0', borderRadius: 6, animation: 'skeleton-pulse 1.5s infinite' }} />
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ width: '70%', height: 14, background: '#e2e8f0', borderRadius: 4, marginBottom: 6, animation: 'skeleton-pulse 1.5s infinite' }} />
+                                                    <div style={{ width: '40%', height: 12, background: '#e2e8f0', borderRadius: 4, animation: 'skeleton-pulse 1.5s infinite' }} />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 ) : suggestions.length > 0 ? (
                                     <div className="search-results">
                                         {suggestions.map((p, index) => (
@@ -169,7 +220,7 @@ export default function PublicHeader() {
                                                 onClick={() => navigate(`/san-pham/${p.slug}${p.colorId ? `?color=${p.colorId}` : ''}`)}
                                             >
                                                 <div className="search-item-img">
-                                                    <img src={p.mainImageUrl} alt="" />
+                                                    <img src={getOptimizedImageUrl(p.mainImageUrl, 100)} alt="" />
                                                 </div>
                                                 <div className="search-item-info">
                                                     <div className="search-item-name">{p.productName}</div>
@@ -190,8 +241,8 @@ export default function PublicHeader() {
                                             Xem tất cả kết quả cho "{searchQuery}"
                                         </div>
                                     </div>
-                                ) : searchQuery.length >= 2 && (
-                                    <div className="search-no-results">Không tìm thấy sản phẩm nào</div>
+                                ) : searchQuery.trim().length >= 1 && (
+                                    <div className="search-no-results">Không tìm thấy sản phẩm nào cho "{searchQuery}"</div>
                                 )}
                             </div>
                         )}

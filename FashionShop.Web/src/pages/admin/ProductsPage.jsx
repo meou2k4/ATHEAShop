@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axiosConfig';
+import { TableSkeleton } from '../../components/Skeleton';
 
 export default function ProductsPage() {
     const [products, setProducts] = useState([]);
@@ -152,7 +153,7 @@ export default function ProductsPage() {
             </div>
 
             <div className="card">
-                {loading ? <div className="loading">⏳ Đang tải...</div> : (
+                {loading ? <TableSkeleton rows={8} cols={7} /> : (
                     <div className="data-list-container">
                         {/* Header - Hidden on Mobile */}
                         <div className="data-list-header grid-products">
