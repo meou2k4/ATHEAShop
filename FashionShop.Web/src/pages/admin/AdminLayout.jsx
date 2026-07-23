@@ -7,7 +7,8 @@ const navItems = [
     { to: '/admin/categories', label: 'Danh mục', icon: '🗂️' },
     { to: '/admin/products', label: 'Sản phẩm', icon: '👗' },
     { to: '/admin/properties', label: 'Màu & Kích thước', icon: '🎨' },
-    { to: '/admin/settings', label: 'Cài đặt', icon: '⚙️' },
+    { to: '/admin/banner', label: 'Banner trang chủ', icon: '🖼️' },
+    { to: '/admin/settings', label: 'Cài đặt liên hệ', icon: '⚙️' },
 ];
 
 export default function AdminLayout() {

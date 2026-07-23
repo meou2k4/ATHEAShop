@@ -11,6 +11,7 @@ import ProductsPage from './pages/admin/ProductsPage';
 import ProductFormPage from './pages/admin/ProductFormPage';
 import ProductDetailPage from './pages/admin/ProductDetailPage';
 import PropertiesPage from './pages/admin/PropertiesPage';
+import BannerPage from './pages/admin/BannerPage';
 import SettingsPage from './pages/admin/SettingsPage';
 
 // Public pages
@@ -52,6 +53,7 @@ function App() {
             <Route path="products/:id/edit" element={<ProductFormPage />} />
             <Route path="products/:id/detail" element={<ProductDetailPage />} />
             <Route path="properties" element={<PropertiesPage />} />
+            <Route path="banner" element={<BannerPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
 
