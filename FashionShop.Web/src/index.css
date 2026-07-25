@@ -2354,19 +2354,19 @@ a {
   max-width: 760px;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
   pointer-events: auto;
-  transform: translateY(75px);
+  transform: translateY(244px);
   animation: bannerFadeUp 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes bannerFadeUp {
   from {
     opacity: 0;
-    transform: translateY(105px);
+    transform: translateY(274px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(75px);
+    transform: translateY(244px);
   }
 }
 
@@ -2374,18 +2374,22 @@ a {
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.3em;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   font-weight: 500;
   display: block;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .main-banner-title {
   font-family: 'Playfair Display', serif;
   font-size: clamp(40px, 6vw, 72px);
   font-weight: 300;
-  line-height: 1.1;
-  margin-bottom: 32px;
-  letter-spacing: -1px;
+  line-height: 1.35;
+  margin-top: 10px;
+  margin-bottom: 40px;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 }
 
 .main-banner-title span {
