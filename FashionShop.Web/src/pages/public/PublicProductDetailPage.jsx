@@ -413,17 +413,17 @@ export default function ProductDetailPage() {
                                                 <div className="social-icon-wrapper">
                                                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg" alt="Zalo" />
                                                 </div>
-                                                <span>Liên Hệ Zalo</span>
+                                                <span>Tư Vấn Zalo</span>
                                             </a>
                                         )}
                                         {fbUrl && (
                                             <a href={fbUrl} target="_blank" rel="noreferrer" className="btn-contact-social btn-contact-fb">
                                                 <div className="social-icon-wrapper">
-                                                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                                                         <path d="M12 2.03998C6.5 2.03998 2 6.52998 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.84998C10.44 7.33998 11.93 5.95998 14.22 5.95998C15.31 5.95998 16.45 6.14998 16.45 6.14998V8.61998H15.19C13.95 8.61998 13.56 9.38998 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.52998 17.5 2.03998 12 2.03998Z" />
                                                     </svg>
                                                 </div>
-                                                <span>Liên Hệ Facebook</span>
+                                                <span>Chat Facebook</span>
                                             </a>
                                         )}
                                     </div>

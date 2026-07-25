@@ -3,7 +3,23 @@ const slugify = require('../utils/slugify');
 
 const getAll = async (req, res) => {
     res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-    const categories = await prisma.category.findMany({ orderBy: { displayOrder: 'asc' } });
+    const { hasProducts } = req.query;
+    
+    let where = {};
+    if (hasProducts === 'true') {
+        where = {
+            products: {
+                some: {
+                    isActive: true
+                }
+            }
+        };
+    }
+
+    const categories = await prisma.category.findMany({ 
+        where,
+        orderBy: { displayOrder: 'asc' } 
+    });
     res.json(categories);
 };
 

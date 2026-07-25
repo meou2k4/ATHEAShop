@@ -66,7 +66,7 @@ export default function HomePage() {
                         {/* MAIN BANNER - Dynamic Banner */}
                         <section className="main-banner">
                                 <Link to={bannerBtnLink} className="main-banner-mobile-link">
-                                        <img src={bannerImg} alt={bannerTitle} className="main-banner-img" fetchpriority="high" loading="eager" decoding="sync" />
+                                        <img src={bannerImg} alt={bannerTitle} className="main-banner-img" fetchPriority="high" loading="eager" decoding="sync" />
                                         <div className="main-banner-overlay"></div>
                                 </Link>
                                 <div className="main-banner-content container">

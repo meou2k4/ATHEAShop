@@ -36,10 +36,23 @@ export default function ProductListPage() {
         if (filter === 'sale') params.set('isOnSale', 'true');
 
         Promise.all([
-            api.get('/Category').catch(() => ({ data: [] })),
+            api.get('/Category?hasProducts=true').catch(() => ({ data: [] })),
+            api.get('/Product/variants-list').catch(() => ({ data: [] })),
             api.get(`/Product/variants-list?${params}`).catch(() => ({ data: [] }))
-        ]).then(([catRes, prodRes]) => {
-            setCategories(catRes.data || []);
+        ]).then(([catRes, allProdsRes, prodRes]) => {
+            const rawCategories = Array.isArray(catRes.data) ? catRes.data : [];
+            const allVariants = Array.isArray(allProdsRes.data) ? allProdsRes.data : [];
+            
+            // Tìm danh sách ID và Tên các danh mục thực sự có sản phẩm đang mở bán
+            const activeCategoryIds = new Set(allVariants.map(v => v.categoryId).filter(Boolean));
+            const activeCategoryNames = new Set(allVariants.map(v => v.categoryName).filter(Boolean));
+
+            // Chỉ hiển thị các danh mục có sản phẩm bán được
+            const validCategories = rawCategories.filter(c => 
+                activeCategoryIds.has(c.id) || activeCategoryNames.has(c.name)
+            );
+
+            setCategories(validCategories);
             
             let list = Array.isArray(prodRes.data) ? prodRes.data : [];
             
@@ -142,40 +155,55 @@ export default function ProductListPage() {
             
             <aside className={`plp-sidebar ${isFilterOpen ? 'open' : ''}`}>
                 <div className="plp-sidebar-mobile-header">
-                    <h3>BỘ LỌC</h3>
+                    <h3>BỘ LỌC SẢN PHẨM</h3>
                     <button onClick={() => setIsFilterOpen(false)}>✕</button>
                 </div>
-                
-                {FILTERS.map(f => (
-                    <div key={f.id} className="plp-sidebar-section">
-                        <button className="plp-sidebar-header" onClick={() => handleHeaderClick(f.id)}>
-                            {f.label}
-                            <span className="plp-sidebar-icon">{expanded[f.id] ? '−' : '+'}</span>
-                        </button>
-                        {expanded[f.id] && (
-                            <ul className="plp-sidebar-list">
-                                <li>
-                                    <Link
-                                        to={f.id === 'all' ? '/san-pham' : `/san-pham?filter=${f.id}`}
-                                        className={`plp-sidebar-link ${!categoryId && filter === (f.id === 'all' ? null : f.id) && (f.id === 'all' ? !filter : true) ? 'active' : ''}`}
-                                    >
-                                        Tất cả
-                                    </Link>
-                                </li>
-                                {categories.map(c => (
-                                    <li key={c.id}>
-                                        <Link
-                                            to={`/san-pham?categoryId=${c.id}${f.id !== 'all' ? `&filter=${f.id}` : ''}`}
-                                            className={`plp-sidebar-link ${String(c.id) === categoryId && (filter === f.id || (f.id === 'all' && !filter)) ? 'active' : ''}`}
-                                        >
-                                            {c.name}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                ))}
+
+                <div className="plp-sidebar-clean">
+                    <div className="plp-sidebar-heading">DANH MỤC</div>
+                    <ul className="plp-sidebar-menu">
+                        <li>
+                            <Link
+                                to="/san-pham"
+                                className={`plp-sidebar-menu-item ${!categoryId && !filter ? 'active' : ''}`}
+                            >
+                                Tất cả sản phẩm
+                            </Link>
+                        </li>
+                        {categories.map(c => (
+                            <li key={c.id}>
+                                <Link
+                                    to={`/san-pham?categoryId=${c.id}${filter ? `&filter=${filter}` : ''}`}
+                                    className={`plp-sidebar-menu-item ${String(c.id) === categoryId ? 'active' : ''}`}
+                                >
+                                    {c.name}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+
+                    <div className="plp-sidebar-divider" />
+
+                    <div className="plp-sidebar-heading">BỘ SƯU TẬP</div>
+                    <ul className="plp-sidebar-menu">
+                        <li>
+                            <Link
+                                to={categoryId ? `/san-pham?categoryId=${categoryId}&filter=new` : '/san-pham?filter=new'}
+                                className={`plp-sidebar-menu-item ${filter === 'new' ? 'active' : ''}`}
+                            >
+                                Sản phẩm mới
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to={categoryId ? `/san-pham?categoryId=${categoryId}&filter=sale` : '/san-pham?filter=sale'}
+                                className={`plp-sidebar-menu-item ${filter === 'sale' ? 'active' : ''}`}
+                            >
+                                Giảm giá / Sale Off
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
             </aside>
 
             <main className="plp-main">
@@ -185,7 +213,6 @@ export default function ProductListPage() {
                             {pageTitle} <span className="plp-toolbar-count">({totalItems} sản phẩm)</span>
                         </h1>
                     </div>
-
                     <div className="plp-toolbar-right">
                         <button className="plp-filter-btn" onClick={() => setIsFilterOpen(true)}>
                             Bộ lọc
