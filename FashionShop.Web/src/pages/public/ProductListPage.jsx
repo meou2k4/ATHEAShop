@@ -47,12 +47,12 @@ export default function ProductListPage() {
             const activeCategoryIds = new Set(allVariants.map(v => v.categoryId).filter(Boolean));
             const activeCategoryNames = new Set(allVariants.map(v => v.categoryName).filter(Boolean));
 
-            // Chỉ hiển thị các danh mục có sản phẩm bán được
+            // Chỉ hiển thị các danh mục thực sự có sản phẩm bán được
             const validCategories = rawCategories.filter(c => 
                 activeCategoryIds.has(c.id) || activeCategoryNames.has(c.name)
             );
 
-            setCategories(validCategories);
+            setCategories(validCategories.length > 0 ? validCategories : rawCategories);
             
             let list = Array.isArray(prodRes.data) ? prodRes.data : [];
             

@@ -94,6 +94,8 @@ const getVariantList = async (req, res) => {
                 productId: p.id,
                 productName: p.name,
                 slug: p.slug,
+                categoryId: p.categoryId,
+                categoryName: p.category?.name,
                 colorId,
                 colorName: colorInfo?.name,
                 colorHex: colorInfo?.hex,
