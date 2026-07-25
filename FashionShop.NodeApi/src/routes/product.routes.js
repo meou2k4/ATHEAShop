@@ -5,6 +5,7 @@ const ctrl = require('../controllers/product.controller');
 // ——— Product CRUD ———
 router.get('/', ctrl.getAll);
 router.get('/variants-list', ctrl.getVariantList);
+router.get('/share/:slug', ctrl.shareProduct);
 router.get('/by-slug/:slug', ctrl.getBySlug);
 router.get('/:id', ctrl.getById);
 router.post('/', authenticate, requireAdmin, ctrl.create);

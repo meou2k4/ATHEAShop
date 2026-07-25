@@ -286,8 +286,93 @@ const deleteImage = async (req, res) => {
     res.status(204).send();
 };
 
+// GET /api/Product/share/:slug
+const shareProduct = async (req, res) => {
+    try {
+        const rawSlug = req.params.slug || '';
+        // Decode URI and remove color search params if present
+        const cleanSlug = decodeURIComponent(rawSlug).split('?')[0];
+
+        const product = await prisma.product.findFirst({
+            where: {
+                OR: [
+                    { slug: cleanSlug },
+                    { slug: { startsWith: cleanSlug } }
+                ]
+            },
+            include: productInclude,
+        });
+
+        const frontendDomain = 'https://www.athea.vn';
+
+        if (!product) {
+            return res.redirect(`${frontendDomain}/san-pham`);
+        }
+
+        const mainImg = product.images.find(i => i.isMain) || product.images[0];
+        let imageUrl = mainImg?.imageUrl || `${frontendDomain}/Banner.jpg`;
+        
+        // Optimize Cloudinary image for OG sharing preview
+        if (imageUrl.includes('res.cloudinary.com') && !imageUrl.includes('/w_')) {
+            imageUrl = imageUrl.replace('/upload/', '/upload/w_1200,c_limit,q_auto,f_auto/');
+        }
+
+        const pageTitle = `${product.name} | ATHEA - Thời Trang Nữ Cao Cấp`;
+        const priceStr = product.isOnSale && product.salePrice 
+            ? `${product.salePrice.toLocaleString('vi-VN')}₫` 
+            : `${product.basePrice.toLocaleString('vi-VN')}₫`;
+
+        const description = product.description 
+            ? `${priceStr} - ${product.description.replace(/<[^>]*>?/gm, '').slice(0, 150)}` 
+            : `${product.name} - Giá ${priceStr}. Mua ngay tại ATHEA Thời Trang Nữ Cao Cấp.`;
+
+        const targetUrl = `${frontendDomain}/san-pham/${product.slug}`;
+
+        const html = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageTitle}</title>
+    <meta name="description" content="${description}">
+    
+    <!-- OpenGraph for Zalo / Facebook / Messenger / iMessage -->
+    <meta property="og:site_name" content="ATHEA - Thời Trang Nữ Cao Cấp">
+    <meta property="og:type" content="product">
+    <meta property="og:title" content="${pageTitle}">
+    <meta property="og:description" content="${description}">
+    <meta property="og:image" content="${imageUrl}">
+    <meta property="og:image:secure_url" content="${imageUrl}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="${targetUrl}">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${pageTitle}">
+    <meta name="twitter:description" content="${description}">
+    <meta name="twitter:image" content="${imageUrl}">
+
+    <!-- Auto redirect human visitors to frontend SPA -->
+    <meta http-equiv="refresh" content="0;url=${targetUrl}">
+</head>
+<body>
+    <p>Đang chuyển hướng đến <a href="${targetUrl}">${product.name}</a>...</p>
+    <script>window.location.href = "${targetUrl}";</script>
+</body>
+</html>`;
+
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+        res.status(200).send(html);
+    } catch (err) {
+        console.error('Share product error:', err);
+        res.redirect('https://www.athea.vn/san-pham');
+    }
+};
+
 module.exports = {
     getAll, getVariantList, getById, getBySlug, create, update, remove,
     addVariant, updateVariant, deleteVariant,
-    addImage, updateImage, deleteImage,
+    addImage, updateImage, deleteImage, shareProduct,
 };

@@ -1,6 +1,17 @@
 {
     "routes": [
         {
+            "src": "/san-pham/(.+)",
+            "has": [
+                {
+                    "type": "header",
+                    "key": "user-agent",
+                    "value": ".*(facebookexternalhit|ZaloBot|Twitterbot|WhatsApp|TelegramBot|LinkedInBot|bot|crawler|spider|facebook|zalo).*"
+                }
+            ],
+            "dest": "https://fashionshop-node-api.vercel.app/api/Product/share/$1"
+        },
+        {
             "handle": "filesystem"
         },
         {
