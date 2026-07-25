@@ -1,8 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 require('dotenv').config();
 
 const app = express();
+
+// Gzip / Deflate compression cho tất cả API responses (giảm 70-80% dung lượng JSON)
+app.use(compression());
 
 // Middleware
 const allowedOrigins = [
