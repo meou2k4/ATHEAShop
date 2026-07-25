@@ -44,11 +44,12 @@ export default function HomePage() {
                 );
         }
 
-        const bannerImg = settings['BannerUrl'] ? getOptimizedImageUrl(settings['BannerUrl'], 1600) : '/Banner.jpg';
+        const bannerImg = settings['BannerUrl'] || '/Banner.jpg';
         const bannerSubtitle = settings['BannerSubtitle'] || 'Premium Collection';
         const bannerTitle = settings['BannerTitle'] || 'ATHEA - Khơi nguồn cảm hứng';
         const bannerBtnText = settings['BannerBtnText'] || 'Khám phá ngay';
         const bannerBtnLink = settings['BannerBtnLink'] || '/san-pham';
+        const hideOverlay = settings['HideBannerOverlay'] === 'true';
         const heroImage = newProducts[0]?.mainImageUrl || '';
 
         return (
@@ -67,17 +68,19 @@ export default function HomePage() {
                         <section className="main-banner">
                                 <Link to={bannerBtnLink} className="main-banner-mobile-link">
                                         <img src={bannerImg} alt={bannerTitle} className="main-banner-img" fetchPriority="high" loading="eager" decoding="sync" />
-                                        <div className="main-banner-overlay"></div>
+                                        {!hideOverlay && <div className="main-banner-overlay"></div>}
                                 </Link>
-                                <div className="main-banner-content container">
-                                        <div className="main-banner-glass">
-                                                <span className="main-banner-subtitle">{bannerSubtitle}</span>
-                                                <h1 className="main-banner-title">
-                                                        {bannerTitle}
-                                                </h1>
-                                                <Link to={bannerBtnLink} className="main-banner-btn">{bannerBtnText}</Link>
+                                {!hideOverlay && (
+                                        <div className="main-banner-content container">
+                                                <div className="main-banner-glass">
+                                                        <span className="main-banner-subtitle">{bannerSubtitle}</span>
+                                                        <h1 className="main-banner-title">
+                                                                {bannerTitle}
+                                                        </h1>
+                                                        <Link to={bannerBtnLink} className="main-banner-btn">{bannerBtnText}</Link>
+                                                </div>
                                         </div>
-                                </div>
+                                )}
                         </section>
 
                         {/* DANH MỤC */}

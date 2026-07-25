@@ -34,6 +34,7 @@ export default function BannerPage() {
                 BannerTitle: map.BannerTitle || 'ATHEA - Khơi nguồn cảm hứng',
                 BannerBtnText: map.BannerBtnText || 'Khám phá ngay',
                 BannerBtnLink: map.BannerBtnLink || '/san-pham',
+                HideBannerOverlay: map.HideBannerOverlay || 'false',
             }));
             setCategories(Array.isArray(cRes.data) ? cRes.data : []);
         }).catch(() => {
@@ -81,6 +82,7 @@ export default function BannerPage() {
                 { key: 'BannerTitle', value: settings.BannerTitle || '', description: 'Title Banner' },
                 { key: 'BannerBtnText', value: settings.BannerBtnText || '', description: 'Tên nút bấm Banner' },
                 { key: 'BannerBtnLink', value: settings.BannerBtnLink || '/san-pham', description: 'Trang chuyển đến khi bấm' },
+                { key: 'HideBannerOverlay', value: settings.HideBannerOverlay || 'false', description: 'Ẩn ô chữ mờ phủ trên Banner' },
             ];
 
             await api.post('/Settings', payload);
@@ -229,6 +231,19 @@ export default function BannerPage() {
                                     ))}
                                 </optgroup>
                             </select>
+                        </div>
+
+                        {/* Checkbox Hide Overlay */}
+                        <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: 8 }}>
+                            <label style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', background: '#f1f5f9', padding: '12px 16px', borderRadius: 8 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={settings.HideBannerOverlay === 'true'}
+                                    onChange={e => setSettings(s => ({ ...s, HideBannerOverlay: e.target.checked ? 'true' : 'false' }))}
+                                    style={{ width: 18, height: 18, cursor: 'pointer' }}
+                                />
+                                <span>✨ Ẩn khung chữ mờ phủ đè (Hiển thị 100% độ nét ảnh banner gốc khi ảnh đã thiết kế sẵn chữ)</span>
+                            </label>
                         </div>
                     </div>
                 </div>
