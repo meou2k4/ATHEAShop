@@ -2337,34 +2337,37 @@ a {
   z-index: 3;
   height: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 0 20px;
+  padding: 0 20px 48px 20px;
+  pointer-events: none;
 }
 
 .main-banner-glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 60px 80px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 24px 44px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   text-align: center;
   color: white;
-  max-width: 800px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  transform: translate(0px, 153px);
-  animation: bannerFadeUp 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  max-width: 640px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+  transform: translateY(0);
+  animation: bannerFadeUp 0.8s ease-out;
 }
 
 @keyframes bannerFadeUp {
   from {
     opacity: 0;
-    transform: translate(0px, 183px);
+    transform: translateY(20px);
   }
 
   to {
     opacity: 1;
-    transform: translate(0px, 153px);
+    transform: translateY(0);
   }
 }
 
