@@ -1,5 +1,12 @@
 const prisma = require('../config/db');
 const slugify = require('../utils/slugify');
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // ————— HELPERS —————
 const productInclude = {
@@ -265,8 +272,16 @@ const deleteImage = async (req, res) => {
     const imageId = +req.params.imageId;
     const existed = await prisma.productImage.findUnique({ where: { id: imageId } });
     if (!existed) return res.status(404).json({ message: 'Không tìm thấy ảnh.' });
-    // Lưu ý: file vật lý trên Vercel Blob không tự xoá.
-    // Nếu cần dọn storage, dùng del(existed.publicId) từ @vercel/blob trước khi xoá DB.
+    
+    // Tự động xoá file ảnh tương ứng trên Cloudinary nếu có publicId
+    if (existed.publicId && existed.imageUrl?.includes('cloudinary.com')) {
+        try {
+            await cloudinary.uploader.destroy(existed.publicId);
+        } catch (err) {
+            console.error('Lỗi khi xoá ảnh trên Cloudinary:', err);
+        }
+    }
+
     await prisma.productImage.delete({ where: { id: imageId } });
     res.status(204).send();
 };

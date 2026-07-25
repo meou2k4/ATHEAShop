@@ -7,9 +7,11 @@
 export function getOptimizedImageUrl(url, width = 600) {
     if (!url || typeof url !== 'string') return url || '';
 
-    // 1. Xử lý Cloudinary URL -> Chèn w_600,q_auto,f_auto
+    // 1. Xử lý Cloudinary URL -> Chèn/thay thế w_600,c_limit,q_auto,f_auto
     if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
-        // Kiểm tra xem đã có param transformation chưa
+        if (url.includes('/upload/f_auto,q_auto/')) {
+            return url.replace('/upload/f_auto,q_auto/', `/upload/w_${width},c_limit,q_auto,f_auto/`);
+        }
         if (!url.includes('/w_')) {
             return url.replace('/upload/', `/upload/w_${width},c_limit,q_auto,f_auto/`);
         }
