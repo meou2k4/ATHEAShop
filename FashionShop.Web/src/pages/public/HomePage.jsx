@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import api from '../../api/axiosConfig';
 import ProductCard from '../../components/ProductCard';
 import { ProductSkeleton } from '../../components/Skeleton';
@@ -52,6 +53,16 @@ export default function HomePage() {
 
         return (
                 <>
+                        <Helmet>
+                                <title>ATHEA - Thời Trang Nữ Cao Cấp</title>
+                                <meta name="description" content="ATHEA - Khơi nguồn cảm hứng thời trang nữ cao cấp. Khám phá bộ sưu tập đầm, áo, quần thiết kế tinh tế vượt thời gian." />
+                                <meta property="og:site_name" content="ATHEA - Thời Trang Nữ Cao Cấp" />
+                                <meta property="og:type" content="website" />
+                                <meta property="og:title" content="ATHEA - Thời Trang Nữ Cao Cấp" />
+                                <meta property="og:description" content="Khám phá ngay bộ sưu tập thời trang nữ cao cấp mới nhất tại ATHEA." />
+                                <meta property="og:image" content={bannerImg} />
+                        </Helmet>
+
                         {/* MAIN BANNER - Dynamic Banner */}
                         <section className="main-banner">
                                 <Link to={bannerBtnLink} className="main-banner-mobile-link">

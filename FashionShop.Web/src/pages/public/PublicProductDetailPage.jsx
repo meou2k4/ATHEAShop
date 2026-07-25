@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import api from '../../api/axiosConfig';
 import { sortSizes } from '../../utils/sizeHelper';
 import ProductCard from '../../components/ProductCard';
 import { ProductDetailSkeleton } from '../../components/Skeleton';
+import { getOptimizedImageUrl } from '../../utils/imageHelper';
 
 export default function ProductDetailPage() {
     const { slug } = useParams();
@@ -254,8 +256,27 @@ export default function ProductDetailPage() {
 
     const currentLightboxImg = lightboxImages[lightboxIdx];
 
+    const ogImage = getOptimizedImageUrl(activeImg?.imageUrl || product.mainImageUrl, 1200);
+    const ogTitle = `${product.name} | ATHEA`;
+    const ogDesc = product.description ? product.description.slice(0, 150) : `Khám phá ngay ${product.name} thiết kế tinh tế tại ATHEA - Thời trang nữ cao cấp.`;
+    const ogUrl = typeof window !== 'undefined' ? window.location.href : '';
+
     return (
         <>
+            <Helmet>
+                <title>{ogTitle}</title>
+                <meta name="description" content={ogDesc} />
+                <meta property="og:site_name" content="ATHEA - Thời Trang Nữ Cao Cấp" />
+                <meta property="og:type" content="product" />
+                <meta property="og:title" content={ogTitle} />
+                <meta property="og:description" content={ogDesc} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+                {ogUrl && <meta property="og:url" content={ogUrl} />}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={ogTitle} />
+                <meta name="twitter:description" content={ogDesc} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Helmet>
             <div className="product-detail">
                 <div className="container">
                     <div className="breadcrumb pdp-breadcrumb">
