@@ -3483,11 +3483,13 @@ a {
 }
 
 .product-info h1 {
+  font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   font-size: 20px;
   font-weight: 600;
   color: var(--pub-text);
   margin-bottom: 8px;
   line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 .product-sku {

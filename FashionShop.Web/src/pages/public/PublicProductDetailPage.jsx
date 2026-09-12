@@ -255,10 +255,11 @@ export default function ProductDetailPage() {
     };
 
     const currentLightboxImg = lightboxImages[lightboxIdx];
+    const cleanProductName = product.name ? product.name.normalize('NFKC').trim() : '';
 
     const ogImage = getOptimizedImageUrl(activeImg?.imageUrl || product.mainImageUrl, 1200);
-    const ogTitle = `${product.name} | ATHEA`;
-    const ogDesc = product.description ? product.description.slice(0, 150) : `Khám phá ngay ${product.name} thiết kế tinh tế tại ATHEA - Thời trang nữ cao cấp.`;
+    const ogTitle = `${cleanProductName} | ATHEA`;
+    const ogDesc = product.description ? product.description.slice(0, 150) : `Khám phá ngay ${cleanProductName} thiết kế tinh tế tại ATHEA - Thời trang nữ cao cấp.`;
     const ogUrl = typeof window !== 'undefined' ? window.location.href : '';
 
     return (
@@ -288,7 +289,7 @@ export default function ProductDetailPage() {
                             <Link to={categoryPath}>{product.categoryName}</Link>
                         </>}
                         <span className="breadcrumb-sep">/</span>
-                        <span style={{ color: 'var(--pub-text)', fontWeight: 500 }}>{product.name}</span>
+                        <span style={{ color: 'var(--pub-text)', fontWeight: 500, fontFamily: 'var(--font-sans, "Inter", sans-serif)' }}>{cleanProductName}</span>
                     </div>
 
                     <div className="product-detail-grid">
@@ -344,7 +345,7 @@ export default function ProductDetailPage() {
                                     {product.isOnSale && <span className="label-sale">SALE</span>}
                                 </div>
 
-                                <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--pub-text)', marginBottom: 4 }}>{product.name}</h1>
+                                <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--pub-text)', marginBottom: 4, fontFamily: 'var(--font-sans, "Inter", sans-serif)' }}>{cleanProductName}</h1>
                                 <div className="product-sku">MSP: {product.slug?.toUpperCase().substring(0, 15) || 'SKU-001'}</div>
 
                                 <div className="product-info-price">
