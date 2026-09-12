@@ -34,7 +34,7 @@ export default function BannerPage() {
                 BannerTitle: map.BannerTitle || 'ATHEA - Khơi nguồn cảm hứng',
                 BannerBtnText: map.BannerBtnText || 'Khám phá ngay',
                 BannerBtnLink: map.BannerBtnLink || '/san-pham',
-                HideBannerOverlay: map.HideBannerOverlay || 'false',
+                HideBannerOverlay: map.HideBannerOverlay || 'true',
             }));
             setCategories(Array.isArray(cRes.data) ? cRes.data : []);
         }).catch(() => {

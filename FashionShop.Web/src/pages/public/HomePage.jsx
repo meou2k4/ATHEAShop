@@ -49,7 +49,7 @@ export default function HomePage() {
         const bannerTitle = settings['BannerTitle'] || 'ATHEA - Khơi nguồn cảm hứng';
         const bannerBtnText = settings['BannerBtnText'] || 'Khám phá ngay';
         const bannerBtnLink = settings['BannerBtnLink'] || '/san-pham';
-        const hideOverlay = settings['HideBannerOverlay'] === 'true';
+        const hideOverlay = settings['HideBannerOverlay'] !== 'false';
         const heroImage = newProducts[0]?.mainImageUrl || '';
 
         return (
