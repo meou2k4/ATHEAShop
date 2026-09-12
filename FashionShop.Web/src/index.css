@@ -67,7 +67,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-family: var(--font-sans, 'Montserrat', sans-serif);
   background: var(--bg);
   color: var(--text);
   font-size: 14px;
@@ -108,7 +108,7 @@ a {
   background-color: var(--admin-bg);
   overflow-x: hidden;
   position: relative;
-  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-family: var(--font-sans, 'Montserrat', sans-serif);
   color: var(--admin-text);
 }
 
@@ -2126,8 +2126,7 @@ a {
   line-height: 1.15;
   margin-bottom: 24px;
   letter-spacing: -.5px;
-  font-family: serif;
-  /* Elegant serif font if possible */
+  font-family: var(--font-sans, 'Montserrat', sans-serif);
 }
 
 .hero-athea h1 span {
@@ -2382,7 +2381,7 @@ a {
 }
 
 .main-banner-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-sans, 'Montserrat', sans-serif);
   font-size: clamp(40px, 6vw, 72px);
   font-weight: 300;
   line-height: 1.35;
