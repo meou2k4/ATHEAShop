@@ -47,13 +47,14 @@ export default function ProductFormPage() {
     const handleSave = async (e) => {
         e.preventDefault(); 
         setError(''); 
-        
+        const cleanName = form.name ? form.name.normalize('NFKC').trim() : '';
+
         // 1. Kiểm tra lặp tên hoặc slug trên client
         const isDuplicateName = allProducts.some(p => 
-            p.name.toLowerCase() === form.name.toLowerCase() && (!isEdit || p.id !== +id)
+            (p.name ? p.name.normalize('NFKC').trim().toLowerCase() : '') === cleanName.toLowerCase() && (!isEdit || p.id !== +id)
         );
         if (isDuplicateName) {
-            setError(`Tên sản phẩm "${form.name}" đã tồn tại.`); return;
+            setError(`Tên sản phẩm "${cleanName}" đã tồn tại.`); return;
         }
 
         const isDuplicateSlug = allProducts.some(p => 
@@ -67,9 +68,11 @@ export default function ProductFormPage() {
         try {
             const payload = {
                 ...form,
+                name: cleanName,
                 categoryId: +form.categoryId,
                 basePrice: +form.basePrice,
                 salePrice: form.isOnSale && form.salePrice ? +form.salePrice : null,
+                // Mô tả chi tiết (description) giữ nguyên 100% không can thiệp
             };
             if (isEdit) {
                 await api.put(`/Product/${id}`, payload);

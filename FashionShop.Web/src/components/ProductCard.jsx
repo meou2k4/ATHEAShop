@@ -77,7 +77,7 @@ export default function ProductCard({ item }) {
                         <span className="vcard-price-normal">{displayPrice?.toLocaleString('vi-VN')}₫</span>
                     )}
                 </div>
-                <div className="vcard-name">{item.productName}</div>
+                <div className="vcard-name">{item.productName ? item.productName.normalize('NFKC').trim() : ''}</div>
                 {item.colorHex && (
                     <div className="vcard-color-dot">
                         <span style={{ background: item.colorHex }} title={item.colorName} />

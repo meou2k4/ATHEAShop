@@ -9,6 +9,8 @@ cloudinary.config({
 });
 
 // ————— HELPERS —————
+const normalizeText = (str) => (typeof str === 'string' ? str.normalize('NFKC').trim() : str);
+
 const productInclude = {
     category: true,
     variants: { include: { color: true, size: true } },
@@ -19,7 +21,7 @@ const mapProduct = (p) => ({
     id: p.id,
     categoryId: p.categoryId,
     categoryName: p.category?.name,
-    name: p.name,
+    name: normalizeText(p.name),
     slug: p.slug,
     description: p.description,
     storageInstructions: p.storageInstructions,
@@ -92,7 +94,7 @@ const getVariantList = async (req, res) => {
 
             result.push({
                 productId: p.id,
-                productName: p.name,
+                productName: normalizeText(p.name),
                 slug: p.slug,
                 categoryId: p.categoryId,
                 categoryName: p.category?.name,
@@ -140,11 +142,13 @@ const create = async (req, res) => {
     if (!name || !categoryId || basePrice === undefined)
         return res.status(400).json({ message: 'Tên, danh mục và giá gốc là bắt buộc.' });
 
-    const slug = slugify(name) + '-' + Date.now();
+    const cleanName = normalizeText(name);
+    const slug = slugify(cleanName) + '-' + Date.now();
     const product = await prisma.product.create({
         data: {
-            name, categoryId: +categoryId, slug,
-            description, storageInstructions,
+            name: cleanName, categoryId: +categoryId, slug,
+            description, // GIỮ NGUYÊN Mô tả chi tiết không can thiệp
+            storageInstructions,
             basePrice: +basePrice,
             isActive: isActive !== false,
             isNew: !!isNew, isOnSale: !!isOnSale,
@@ -162,12 +166,14 @@ const update = async (req, res) => {
     const existed = await prisma.product.findUnique({ where: { id } });
     if (!existed) return res.status(404).json({ message: 'Không tìm thấy sản phẩm.' });
 
+    const cleanName = name ? normalizeText(name) : undefined;
     await prisma.product.update({
         where: { id },
         data: {
-            ...(name && { name, slug: slugify(name) + '-' + id }),
+            ...(cleanName && { name: cleanName, slug: slugify(cleanName) + '-' + id }),
             ...(categoryId && { categoryId: +categoryId }),
-            description, storageInstructions,
+            description, // GIỮ NGUYÊN Mô tả chi tiết không can thiệp
+            storageInstructions,
             ...(basePrice !== undefined && { basePrice: +basePrice }),
             ...(isActive !== undefined && { isActive }),
             ...(isNew !== undefined && { isNew }),
